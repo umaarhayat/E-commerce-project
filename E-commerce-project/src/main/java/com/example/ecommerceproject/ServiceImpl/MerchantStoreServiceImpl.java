@@ -8,6 +8,7 @@ import com.example.ecommerceproject.Exception.RoleNotFoundException;
 import com.example.ecommerceproject.Exception.UserNotFoundException;
 import com.example.ecommerceproject.Repository.MerchantStoreRepo;
 import com.example.ecommerceproject.Repository.UserRepo;
+import com.example.ecommerceproject.Service.EmailService;
 import com.example.ecommerceproject.Service.MerchantStoreService;
 import com.example.ecommerceproject.Service.RoleService;
 import com.example.ecommerceproject.Service.UserService;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MerchantStoreServiceImpl implements MerchantStoreService {
@@ -39,6 +41,9 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private ModelMapper modelMapper;
     @Autowired
     private StoreConverter storeConverter;
+
+    @Autowired
+    private EmailService emailService;
 
     // ================= CREATE =================
     @Override
@@ -82,6 +87,11 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         store.setCreatedAt(LocalDateTime.now());
         store.setUpdatedAt(LocalDateTime.now());
 
+        // ✅ Generate storeCode if null or empty
+        if (store.getStoreCode() == null || store.getStoreCode().isEmpty()) {
+            store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        }
+
         // 7️⃣ Save Addresses
         if (persistable.getMerchantStoreDto().getStoreAddresses() != null) {
             List<StoreAddress> addresses = new ArrayList<>();
@@ -95,6 +105,18 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
 
         // 8️⃣ Save MerchantStore
         MerchantStore savedStore = merchantStoreRepo.save(store);
+
+        // 6️⃣ Send Email to User
+        EmailDto emailDto = new EmailDto();
+        emailDto.setTo(user.getEmail());
+        emailDto.setSubject("Store Created Successfully");
+        emailDto.setBody(
+                "Dear " + user.getUserName() + ",\n\n" +
+                        "Your store '" + savedStore.getStoreName() + "' has been created successfully.\n" +
+                        "Store Code: " + savedStore.getStoreCode() + "\n\n" +
+                        "Thank you for using our platform."
+        );
+        emailService.sendEmail(emailDto);
 
         // 9️⃣ Map addresses manually to DTO
         MerchantStoreDto storeDto = modelMapper.map(savedStore, MerchantStoreDto.class);
