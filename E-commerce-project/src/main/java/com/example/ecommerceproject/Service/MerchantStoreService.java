@@ -26,7 +26,6 @@ public interface MerchantStoreService {
     String softDeleteMerchantStore(Long id);
     String activateUserOfStore(Long storeId, boolean isActive);
     String activateOrDeactivateStore(Long storeId, boolean isActive);
-
     ReadableMerchantStore getMerchantStoreByStoreCode(String storeCode);
 
 

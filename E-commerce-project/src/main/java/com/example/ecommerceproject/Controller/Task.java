@@ -1,7 +1,7 @@
 package com.example.ecommerceproject.Controller;
 
 public class Task {
-    // get MerchantStore by storeCOde -------------inprogress
+    // get MerchantStore by storeCOde -------------  completed
     // Create Permission  --------------------------- completed
     // get All permission --------------------------- completed
     // get permission by Id --------------------------completed

@@ -8,7 +8,6 @@ import java.util.List;
 @Entity
 @Table(name = "MERCHANT_STORE")
 public class MerchantStore {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

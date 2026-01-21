@@ -74,8 +74,6 @@ public class MerchantStoreController {
         String message = merchantStoreService.activateUserOfStore(storeId, isActive);
         return ResponseEntity.ok(message);
     }
-//
-//
     // Activate / Deactivate store
 @PatchMapping("/stores/{id}/status")
 public ResponseEntity<String> updateStoreStatus(

@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class MerchantStoreServiceImpl implements MerchantStoreService {
@@ -82,6 +83,11 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         store.setCreatedAt(LocalDateTime.now());
         store.setUpdatedAt(LocalDateTime.now());
 
+
+        // ✅ Generate storeCode if null or empty
+        if (store.getStoreCode() == null || store.getStoreCode().isEmpty()) {
+            store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+        }
         // 7️⃣ Save Addresses
         if (persistable.getMerchantStoreDto().getStoreAddresses() != null) {
             List<StoreAddress> addresses = new ArrayList<>();
@@ -235,6 +241,10 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         MerchantStore store = merchantStoreRepo.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("Merchant Store not found"));
 
+        // safety check
+        if (store.getStoreCode() == null) {
+            store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8));
+        }
         // Soft delete store check (optional)
         if (store.getIsDelete() != null && store.getIsDelete()) {
             throw new RuntimeException("Cannot activate/deactivate a deleted store");
@@ -252,14 +262,11 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
                 .orElseThrow(() -> new MerchantStoreNotFoundException(
                         "Merchant store not found with storeCode: " + storeCode
                 ));
-
         if (store.getIsDelete() != null && store.getIsDelete()) {
             throw new MerchantStoreNotFoundException("Merchant store is deleted: " + storeCode);
         }
-
         User user = store.getUser();
         MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
-
         // Convert to ReadableMerchantStore
         return storeConverter.convertToReadable(user, storeDto);
     }
