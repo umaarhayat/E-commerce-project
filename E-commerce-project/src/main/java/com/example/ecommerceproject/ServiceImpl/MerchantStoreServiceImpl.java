@@ -96,20 +96,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         // 8️⃣ Save MerchantStore
         MerchantStore savedStore = merchantStoreRepo.save(store);
 
-
-
-        // 📨 9️⃣ SEND EMAIL AFTER STORE CREATION  ← ⭐ ADD THIS PART
-        EmailRequest email = new EmailRequest();
-        email.setTo(user.getEmail());
-        email.setSubject("Your Store Has Been Created");
-        email.setBody(
-                "Dear " + user.getUserName() + ",\n\n" +
-                        "Congratulations! Your store '" + savedStore.getStoreName() + "' has been created successfully.\n\n" +
-                        "Store Code: " + savedStore.getStoreCode() + "\n\n" +
-                        "Thank you for choosing our platform."
-        );
-        emailService.sendEmail(email);
-
         // 9️⃣ Map addresses manually to DTO
         MerchantStoreDto storeDto = modelMapper.map(savedStore, MerchantStoreDto.class);
         if (savedStore.getAddresses() != null) {
