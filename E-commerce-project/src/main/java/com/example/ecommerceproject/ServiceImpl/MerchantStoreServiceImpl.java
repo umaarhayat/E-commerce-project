@@ -105,7 +105,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
 
         // 8️⃣ Save MerchantStore
         MerchantStore savedStore = merchantStoreRepo.save(store);
-
         // 6️⃣ Send Email to User
         EmailDto emailDto = new EmailDto();
         emailDto.setTo(user.getEmail());
