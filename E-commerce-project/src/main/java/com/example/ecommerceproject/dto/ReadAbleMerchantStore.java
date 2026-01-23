@@ -14,6 +14,7 @@ public class ReadAbleMerchantStore {
     private Long id;
     private String storeName;
     private String description;
+    private String logo;
     private String logoUrl;
     private String ownerName;
     private String ownerEmail;
@@ -142,5 +143,13 @@ public class ReadAbleMerchantStore {
 
     public void setActive(Boolean active) {
         isActive = active;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 }

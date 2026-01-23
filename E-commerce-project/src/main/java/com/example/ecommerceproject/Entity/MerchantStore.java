@@ -17,6 +17,9 @@ public class MerchantStore {
     private String storeCode;
     @Column(name = "description")
     private String description;
+    @Column(name = "logo")
+    private String logo;   // serf file name save hoga
+
     @Column(name = "logo_url")
     private String logoUrl;
     @Column(name = "owner_name")
@@ -185,5 +188,13 @@ public class MerchantStore {
 
     public void setStoreCode(String storeCode) {
         this.storeCode = storeCode;
+    }
+
+    public String getLogo() {
+        return logo;
+    }
+
+    public void setLogo(String logo) {
+        this.logo = logo;
     }
 }

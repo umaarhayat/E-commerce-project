@@ -67,6 +67,4 @@ public class RoleController {
         return ResponseEntity.ok(roleDto);
     }
 
-
-
 }

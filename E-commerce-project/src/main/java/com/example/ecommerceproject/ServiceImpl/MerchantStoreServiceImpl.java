@@ -8,6 +8,7 @@ import com.example.ecommerceproject.Exception.RoleNotFoundException;
 import com.example.ecommerceproject.Exception.UserNotFoundException;
 import com.example.ecommerceproject.Repository.MerchantStoreRepo;
 import com.example.ecommerceproject.Repository.UserRepo;
+import com.example.ecommerceproject.Service.EmailService;
 import com.example.ecommerceproject.Service.MerchantStoreService;
 import com.example.ecommerceproject.Service.RoleService;
 import com.example.ecommerceproject.Service.UserService;
@@ -16,10 +17,18 @@ import com.example.ecommerceproject.dto.*;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.dto.ReadAbleUser;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +49,8 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private ModelMapper modelMapper;
     @Autowired
     private StoreConverter storeConverter;
+    @Autowired
+    private EmailService emailService;
 
     // ================= CREATE =================
     @Override
@@ -83,7 +94,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         store.setCreatedAt(LocalDateTime.now());
         store.setUpdatedAt(LocalDateTime.now());
 
-
         // ✅ Generate storeCode if null or empty
         if (store.getStoreCode() == null || store.getStoreCode().isEmpty()) {
             store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
@@ -101,6 +111,17 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
 
         // 8️⃣ Save MerchantStore
         MerchantStore savedStore = merchantStoreRepo.save(store);
+        // 6️⃣ Send Email to User
+        EmailDto emailDto = new EmailDto();
+        emailDto.setTo(user.getEmail());
+        emailDto.setSubject("Store Created Successfully");
+        emailDto.setBody(
+                "Dear " + user.getUserName() + ",\n\n" +
+                        "Your store '" + savedStore.getStoreName() + "' has been created successfully.\n" +
+                        "Store Code: " + savedStore.getStoreCode() + "\n\n" +
+                        "Thank you for using our platform."
+        );
+        emailService.sendEmail(emailDto);
 
         // 9️⃣ Map addresses manually to DTO
         MerchantStoreDto storeDto = modelMapper.map(savedStore, MerchantStoreDto.class);
@@ -116,9 +137,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         //  🔟 Convert to ReadableMerchantStore
         return storeConverter.convertToReadable(user, storeDto);
     }
-
-
-
     // ================= GET ALL =================
     @Override
     public List<ReadableMerchantStore> getAllMerchantStore() {
@@ -142,8 +160,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         if (result.isEmpty()) throw new MerchantStoreNotFoundException("No active merchant stores found");
         return result;
     }
-
-
     // ================= GET BY ID =================
     @Override
     public ReadableMerchantStore getById(Long id) {
@@ -154,7 +170,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         if (Boolean.TRUE.equals(store.getIsDelete())) {
             throw new MerchantStoreNotFoundException("Store not found with id: " + id);
         }
-
         User user = store.getUser();
         // Optional: skip if user is inactive/soft-deleted
         if (user == null || Boolean.FALSE.equals(user.getActive())) {
@@ -164,8 +179,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
         return storeConverter.convertToReadable(user, storeDto);
     }
-
-
 
     // ================= UPDATE =================
     @Override
@@ -201,7 +214,7 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         return storeConverter.convertToReadable(user, modelMapper.map(store, MerchantStoreDto.class));
     }
 
-    // ================= DELETE =================
+    // ================= HARD DELETE =================
     @Override
     public void deleteMerchantStore(Long id) {
         MerchantStore store = merchantStoreRepo.findById(id)
@@ -212,6 +225,7 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
 
         merchantStoreRepo.delete(store);
     }
+    // =============== SOFT DELETE ============
     @Override
     public String softDeleteMerchantStore(Long id) {
 
@@ -221,6 +235,8 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         merchantStoreRepo.save(store);
         return "MerchantStore  soft deleted successfully";
     }
+
+    //================USER ACTIVATED / USER DEACTIVATED =====================
     @Override
     public String activateUserOfStore(Long storeId, boolean isActive) {
         MerchantStore store = merchantStoreRepo.findById(storeId)
@@ -235,16 +251,12 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
 
         return isActive ? "User activated successfully" : "User deactivated successfully";
     }
-
+// ==================STORE ACTIVATED / STORE DEACTIVATED ==============
     @Override
     public String activateOrDeactivateStore(Long storeId, boolean isActive) {
         MerchantStore store = merchantStoreRepo.findById(storeId)
                 .orElseThrow(() -> new RuntimeException("Merchant Store not found"));
 
-        // safety check
-        if (store.getStoreCode() == null) {
-            store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8));
-        }
         // Soft delete store check (optional)
         if (store.getIsDelete() != null && store.getIsDelete()) {
             throw new RuntimeException("Cannot activate/deactivate a deleted store");
@@ -256,19 +268,128 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         return isActive ? "Store activated successfully" : "Store deactivated successfully";
     }
 
+    // ================== GIT MERCHANTSTORE STORE BY STORE CODE =================
     @Override
     public ReadableMerchantStore getMerchantStoreByStoreCode(String storeCode) {
         MerchantStore store = merchantStoreRepo.findByStoreCode(storeCode)
                 .orElseThrow(() -> new MerchantStoreNotFoundException(
                         "Merchant store not found with storeCode: " + storeCode
                 ));
+
         if (store.getIsDelete() != null && store.getIsDelete()) {
             throw new MerchantStoreNotFoundException("Merchant store is deleted: " + storeCode);
         }
+
         User user = store.getUser();
         MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
+
         // Convert to ReadableMerchantStore
         return storeConverter.convertToReadable(user, storeDto);
     }
+// ================ UPLOADING STORE LOGO =============================
+@Override
+public String uploadStoreLogo(Long storeId, MultipartFile logo) {
+    if (logo == null || logo.isEmpty()) {
+        throw new MerchantStoreNotFoundException("Logo file is required");
+    }
+    MerchantStore store = merchantStoreRepo.findById(storeId)
+            .orElseThrow(() -> new RuntimeException("Store not found"));
+    if (Boolean.TRUE.equals(store.getIsDelete())) {
+        throw new RuntimeException("Cannot upload logo for deleted store");
+    }
+    Path storeDir = Paths.get("uploads", "stores", "store-" + store.getId());
+    try {
+        Files.createDirectories(storeDir);
+
+        // 🔥 DELETE ALL OLD LOGOS (IMPORTANT FIX)
+        Files.list(storeDir)
+                .filter(Files::isRegularFile)
+                .forEach(file -> {
+                    try {
+                        Files.delete(file);
+                    } catch (IOException e) {
+                        throw new RuntimeException("Failed to delete old logo");
+                    }
+                });
+
+        // 🔥 SAVE NEW LOGO
+        String originalFileName = logo.getOriginalFilename();
+        String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+
+        String newFileName = "logo_" + System.currentTimeMillis() + extension;
+        Path newFilePath = storeDir.resolve(newFileName);
+
+        Files.write(newFilePath, logo.getBytes());
+
+        // 🔥 UPDATE DB
+        store.setLogo(newFileName);
+        store.setUpdatedAt(LocalDateTime.now());
+        merchantStoreRepo.save(store);
+
+        return "Store logo uploaded successfully";
+
+    } catch (IOException e) {
+        throw new RuntimeException("Failed to upload logo", e);
+    }
+}
+    //================ DOWNLOAD STORE LOGO ============
+    @Override
+    public Resource downloadStoreLogo(Long storeId) {
+
+        MerchantStore store = merchantStoreRepo.findById(storeId)
+                .orElseThrow(() -> new RuntimeException("Merchant store not found"));
+
+        if (store.getLogo() == null || store.getLogo().isBlank()) {
+            throw new RuntimeException("Logo not found for store");
+        }
+
+        try {
+            // ✅ SAME PATH as upload
+            Path filePath = Paths.get(
+                    "uploads",
+                    "stores",
+                    "store-" + store.getId(),
+                    store.getLogo()
+            ).toAbsolutePath();
+
+            if (!Files.exists(filePath)) {
+                throw new RuntimeException("Logo file not found on server: " + filePath);
+            }
+            return (Resource) new UrlResource(filePath.toUri());
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Error loading logo file", e);
+        }
+    }
+
+    // ===============DELETE STORE LOGO ==========================================
+    @Override
+    public String deleteStoreLogo(Long storeId) {
+
+        MerchantStore store = merchantStoreRepo.findById(storeId)
+                .orElseThrow(() ->
+                        new MerchantStoreNotFoundException("Store not found with id: " + storeId));
+
+
+        if (store.getLogo() == null || store.getLogo().isBlank()) {
+            throw new MerchantStoreNotFoundException("No logo found for this store");
+        }
+        String storeName = store.getStoreName().replaceAll("\\s+", "_");
+        Path logoPath = Paths.get("uploads/stores/", storeName, store.getLogo());
+
+        try {
+            if (Files.exists(logoPath)) {
+                Files.delete(logoPath);
+            }
+            store.setLogo(null);
+            store.setUpdatedAt(LocalDateTime.now());
+            merchantStoreRepo.save(store);
+            return "Store logo deleted successfully";
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete logo", e);
+        }
+    }
+
+
 
 }
