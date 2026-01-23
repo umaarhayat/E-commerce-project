@@ -297,7 +297,7 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
     if (Boolean.TRUE.equals(store.getIsDelete())) {
         throw new RuntimeException("Cannot upload logo for deleted store");
     }
-    Path storeDir = Paths.get("uploads", "stores", "store-" + store.getId());
+    Path storeDir = Paths.get("uploads", "stores", store.getStoreName());
     try {
         Files.createDirectories(storeDir);
 
@@ -348,7 +348,7 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
             Path filePath = Paths.get(
                     "uploads",
                     "stores",
-                    "store-" + store.getId(),
+                    store.getStoreName(),
                     store.getLogo()
             ).toAbsolutePath();
 
@@ -370,26 +370,31 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
                 .orElseThrow(() ->
                         new MerchantStoreNotFoundException("Store not found with id: " + storeId));
 
+        deleteFile(store.getStoreName(),store.getLogo());
 
         if (store.getLogo() == null || store.getLogo().isBlank()) {
             throw new MerchantStoreNotFoundException("No logo found for this store");
         }
-        String storeName = store.getStoreName().replaceAll("\\s+", "_");
-        Path logoPath = Paths.get("uploads/stores/", storeName, store.getLogo());
+
+        store.setLogo(null);
+        store.setUpdatedAt(LocalDateTime.now());
+        merchantStoreRepo.save(store);
+        return "Store logo deleted successfully";
+    }
+
+    public void deleteFile(String path, String fileName) {
+
+        String storeName = path.replaceAll("\\s+", "_");
+        Path logoPath = Paths.get("uploads/stores/", storeName, fileName);
 
         try {
             if (Files.exists(logoPath)) {
                 Files.delete(logoPath);
             }
-            store.setLogo(null);
-            store.setUpdatedAt(LocalDateTime.now());
-            merchantStoreRepo.save(store);
-            return "Store logo deleted successfully";
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to delete logo", e);
+        }
+        catch (IOException e){
+            System.out.println(e);
         }
     }
-
-
-
 }
+

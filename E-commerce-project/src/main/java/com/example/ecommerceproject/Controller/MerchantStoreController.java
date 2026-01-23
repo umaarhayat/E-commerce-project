@@ -14,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-
 import java.util.List;
 
 @RestController
@@ -75,8 +74,6 @@ public class MerchantStoreController {
         String message = merchantStoreService.activateUserOfStore(storeId, isActive);
         return GenericResponse.success(message, "Store user status updated successfully");
     }
-//
-//
 
     // ================= ACTIVATE / DEACTIVATE STORE =================
     @PatchMapping("/stores/{id}/status")
@@ -93,27 +90,27 @@ public class MerchantStoreController {
         ReadableMerchantStore store = merchantStoreService.getMerchantStoreByStoreCode(storeCode);
         return GenericResponse.success(store, "Merchant Store retrieved successfully by store code");
     }
-//====================POST UPLOADING LOGO ==============================
-@PostMapping(value = "/{storeId}/upload-logo",
-        consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo) {
-    if (logo == null || logo.isEmpty()) {
-        return ResponseEntity
-                .badRequest()
-                .body("Logo file is required");
-    }
-    return ResponseEntity.ok("Logo uploaded successfully");
-}
 
-    //============ GET DOWNLOAD LOGO ========================================
+    // ================= POST UPLOADING LOGO =================
+    @PostMapping(value = "/{storeId}/upload-logo",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo) {
+        if (logo == null || logo.isEmpty()) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Logo file is required");
+        }
+        return ResponseEntity.ok("Logo uploaded successfully");
+    }
+
+    // ================= GET DOWNLOAD LOGO =================
     @GetMapping("/{storeId}/download-logo")
     public ResponseEntity<?> downloadStoreLogo(@PathVariable Long storeId) {
         Resource resource = merchantStoreService.downloadStoreLogo(storeId);
 
         if (resource == null) {
-            // Agar logo DB me null hai to proper response
             return ResponseEntity
-                    .status(HttpStatus.NOT_FOUND) // 404
+                    .status(HttpStatus.NOT_FOUND)
                     .body("Logo file is required for this store.");
         }
 
@@ -124,7 +121,7 @@ public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required 
                 .body(resource);
     }
 
-    //  ================== DELETED STORE LOGO ======================================
+    // ================= DELETE STORE LOGO =================
     @DeleteMapping("/{storeId}/delete-logo")
     public ResponseEntity<GenericResponse<String>> deleteStoreLogo(@PathVariable Long storeId) {
         String message = merchantStoreService.deleteStoreLogo(storeId);
@@ -138,10 +135,5 @@ public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required 
                 GenericResponse.success(message, "Logo deleted successfully")
         );
     }
-
-
-
-
-
 
 }
