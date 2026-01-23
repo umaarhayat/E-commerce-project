@@ -49,7 +49,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private ModelMapper modelMapper;
     @Autowired
     private StoreConverter storeConverter;
-
     @Autowired
     private EmailService emailService;
 
@@ -99,7 +98,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         if (store.getStoreCode() == null || store.getStoreCode().isEmpty()) {
             store.setStoreCode("STORE-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
         }
-
         // 7️⃣ Save Addresses
         if (persistable.getMerchantStoreDto().getStoreAddresses() != null) {
             List<StoreAddress> addresses = new ArrayList<>();
@@ -172,7 +170,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         if (Boolean.TRUE.equals(store.getIsDelete())) {
             throw new MerchantStoreNotFoundException("Store not found with id: " + id);
         }
-
         User user = store.getUser();
         // Optional: skip if user is inactive/soft-deleted
         if (user == null || Boolean.FALSE.equals(user.getActive())) {
@@ -182,8 +179,6 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
         return storeConverter.convertToReadable(user, storeDto);
     }
-
-
 
     // ================= UPDATE =================
     @Override
@@ -273,7 +268,7 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         return isActive ? "Store activated successfully" : "Store deactivated successfully";
     }
 
-    // ================== GITMERCHANTSTORE STORE BY STORE CODE =================
+    // ================== GIT MERCHANTSTORE STORE BY STORE CODE =================
     @Override
     public ReadableMerchantStore getMerchantStoreByStoreCode(String storeCode) {
         MerchantStore store = merchantStoreRepo.findByStoreCode(storeCode)
@@ -337,8 +332,6 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
         throw new RuntimeException("Failed to upload logo", e);
     }
 }
-
-
     //================ DOWNLOAD STORE LOGO ============
     @Override
     public Resource downloadStoreLogo(Long storeId) {
@@ -362,7 +355,6 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
             if (!Files.exists(filePath)) {
                 throw new RuntimeException("Logo file not found on server: " + filePath);
             }
-
             return (Resource) new UrlResource(filePath.toUri());
 
         } catch (MalformedURLException e) {
@@ -392,7 +384,6 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
             store.setLogo(null);
             store.setUpdatedAt(LocalDateTime.now());
             merchantStoreRepo.save(store);
-
             return "Store logo deleted successfully";
         } catch (IOException e) {
             throw new RuntimeException("Failed to delete logo", e);
