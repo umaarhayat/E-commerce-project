@@ -1,8 +1,9 @@
 package com.example.ecommerceproject.Service;
 
-import com.example.ecommerceproject.dto.MerchantStoreDto;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -26,8 +27,8 @@ public interface MerchantStoreService {
     String softDeleteMerchantStore(Long id);
     String activateUserOfStore(Long storeId, boolean isActive);
     String activateOrDeactivateStore(Long storeId, boolean isActive);
-
     ReadableMerchantStore getMerchantStoreByStoreCode(String storeCode);
-
-
+    String uploadStoreLogo(Long storeId, MultipartFile logo);
+    Resource downloadStoreLogo(Long storeId);
+    String deleteStoreLogo(Long storeId);
 }

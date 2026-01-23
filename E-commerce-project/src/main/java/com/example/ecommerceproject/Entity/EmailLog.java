@@ -10,18 +10,12 @@ public class EmailLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
     private String recipient;  // user email
-
     private String subject;
-
     @Column(columnDefinition = "TEXT")
     private String body;
-
     private LocalDateTime sentAt;
-
     private boolean success;
-
     // ✅ Constructors
     public EmailLog() {}
 

@@ -5,9 +5,15 @@ import com.example.ecommerceproject.Service.UserService;
 import com.example.ecommerceproject.dto.GenericResponse;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
+import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 
 import java.util.List;
 
@@ -87,4 +93,55 @@ public class MerchantStoreController {
         ReadableMerchantStore store = merchantStoreService.getMerchantStoreByStoreCode(storeCode);
         return GenericResponse.success(store, "Merchant Store retrieved successfully by store code");
     }
+//====================POST UPLOADING LOGO ==============================
+@PostMapping(value = "/{storeId}/upload-logo",
+        consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo) {
+    if (logo == null || logo.isEmpty()) {
+        return ResponseEntity
+                .badRequest()
+                .body("Logo file is required");
+    }
+    return ResponseEntity.ok("Logo uploaded successfully");
+}
+
+    //============ GET DOWNLOAD LOGO ========================================
+    @GetMapping("/{storeId}/download-logo")
+    public ResponseEntity<?> downloadStoreLogo(@PathVariable Long storeId) {
+        Resource resource = merchantStoreService.downloadStoreLogo(storeId);
+
+        if (resource == null) {
+            // Agar logo DB me null hai to proper response
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND) // 404
+                    .body("Logo file is required for this store.");
+        }
+
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_PNG)
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "inline; filename=\"" + resource.getFilename() + "\"")
+                .body(resource);
+    }
+
+    //  ================== DELETED STORE LOGO ======================================
+    @DeleteMapping("/{storeId}/delete-logo")
+    public ResponseEntity<GenericResponse<String>> deleteStoreLogo(@PathVariable Long storeId) {
+        String message = merchantStoreService.deleteStoreLogo(storeId);
+
+        if (message == null) {
+            return ResponseEntity.ok(
+                    GenericResponse.error("No logo found for this store", "LOGO_NOT_FOUND")
+            );
+        }
+        return ResponseEntity.ok(
+                GenericResponse.success(message, "Logo deleted successfully")
+        );
+    }
+
+
+
+
+
+
 }

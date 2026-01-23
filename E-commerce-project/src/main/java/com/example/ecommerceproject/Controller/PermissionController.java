@@ -21,23 +21,44 @@ import java.util.List;
         @PostMapping
         public GenericResponse<PermissionDto> createPermission(@RequestBody PermissionDto dto) {
             PermissionDto createdPermission = permissionService.createPermission(dto);
+            if (createdPermission == null) {
+                // Agar DB me data null hai
+                return GenericResponse.error("Data not found in database", "DATA_NOT_FOUND");
+            }
             return GenericResponse.success(createdPermission, "Permission created successfully");
         }
-
-
         // ✅ Get All Permissions
         @GetMapping
-        public ResponseEntity<List<PermissionDto>> getAllPermissions() {
+        public ResponseEntity<GenericResponse<List<PermissionDto>>> getAllPermissions() {
             List<PermissionDto> permissions = permissionService.getAllPermissions();
-            return ResponseEntity.ok(permissions);
+
+            if (permissions == null || permissions.isEmpty()) {
+                return ResponseEntity.ok(
+                        GenericResponse.error("No permissions found in database", "DATA_NOT_FOUND")
+                );
+            }
+            return ResponseEntity.ok(
+                    GenericResponse.success(permissions, "Permissions retrieved successfully")
+            );
         }
+
 
         // ✅ Get Permission By ID
         @GetMapping("/{id}")
-        public ResponseEntity<PermissionDto> getPermissionById(@PathVariable Long id) {
+        public ResponseEntity<GenericResponse<PermissionDto>> getPermissionById(@PathVariable Long id) {
             PermissionDto dto = permissionService.getPermissionById(id);
-            return ResponseEntity.ok(dto);
+
+            if (dto == null) {
+                // Agar DB me id ke liye data nahi hai
+                return ResponseEntity.ok(
+                        GenericResponse.error("Data not found in database", "DATA_NOT_FOUND")
+                );
+            }
+            return ResponseEntity.ok(
+                    GenericResponse.success(dto, "Permission retrieved successfully")
+            );
         }
+
     }
 
 
