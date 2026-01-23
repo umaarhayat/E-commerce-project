@@ -13,7 +13,7 @@ public class MerchantStore {
     private Long id;
     @Column(name = "store_name", nullable = false)
     private String storeName;
-    @Column(name = "store_code", unique = true, nullable = false, length = 50)
+    @Column(name = "store_code")
     private String storeCode;
     @Column(name = "description")
     private String description;

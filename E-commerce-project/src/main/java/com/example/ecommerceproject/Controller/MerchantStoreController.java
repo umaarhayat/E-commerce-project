@@ -94,12 +94,14 @@ public class MerchantStoreController {
     // ================= POST UPLOADING LOGO =================
     @PostMapping(value = "/{storeId}/upload-logo",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo) {
+    public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo,@PathVariable long
+                                             storeId) {
         if (logo == null || logo.isEmpty()) {
             return ResponseEntity
                     .badRequest()
                     .body("Logo file is required");
         }
+        merchantStoreService.uploadStoreLogo(storeId,logo);
         return ResponseEntity.ok("Logo uploaded successfully");
     }
 
