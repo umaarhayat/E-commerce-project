@@ -297,7 +297,8 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
     if (Boolean.TRUE.equals(store.getIsDelete())) {
         throw new RuntimeException("Cannot upload logo for deleted store");
     }
-    Path storeDir = Paths.get("uploads", "stores", store.getStoreName());
+    Path storeDir = Paths.get("uploads", "stores", store.getStoreCode());
+
     try {
         Files.createDirectories(storeDir);
 
@@ -348,7 +349,7 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
             Path filePath = Paths.get(
                     "uploads",
                     "stores",
-                    store.getStoreName(),
+                    store.getStoreCode(),
                     store.getLogo()
             ).toAbsolutePath();
 
