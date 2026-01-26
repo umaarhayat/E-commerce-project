@@ -59,14 +59,17 @@ public class MerchantStoreController {
         return GenericResponse.success(updatedStore, "Merchant Store updated successfully");
     }
 
-    // ================= SOFT DELETE =================
+    /*
+     * Soft deletes a Merchant Store
+     * @param id the ID of the merchant store to soft delete
+     * @return success message after soft deletion
+     */
     @PutMapping("/soft-delete/{id}")
     public GenericResponse<String> softDeleteMerchantStore(@PathVariable Long id) {
         String message = merchantStoreService.softDeleteMerchantStore(id);
         return GenericResponse.success(message, "Merchant Store soft-deleted successfully");
     }
 
-    // ================= ACTIVATE / DEACTIVATE STORE USER =================
     @PatchMapping("/{storeId}/user/status")
     public GenericResponse<String> activateUserOfStore(
             @PathVariable Long storeId,
@@ -105,7 +108,6 @@ public class MerchantStoreController {
         return ResponseEntity.ok("Logo uploaded successfully");
     }
 
-    // ================= GET DOWNLOAD LOGO =================
     @GetMapping("/{storeId}/download-logo")
     public ResponseEntity<?> downloadStoreLogo(@PathVariable Long storeId) {
         Resource resource = merchantStoreService.downloadStoreLogo(storeId);

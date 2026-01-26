@@ -1,5 +1,6 @@
 package com.example.ecommerceproject.converter;
 
+import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Entity.Role;
 import com.example.ecommerceproject.Entity.StoreAddress;
 import com.example.ecommerceproject.Entity.User;
@@ -12,10 +13,8 @@ import java.util.List;
 
 @Component
 public class StoreConverter {
-
     // Convert User + StoreDto to ReadableMerchantStore
     public ReadableMerchantStore convertToReadable(User user, MerchantStoreDto storeDto) {
-
         // -------- User --------
         ReadAbleUser readAbleUser = new ReadAbleUser();
         if (user != null) {
@@ -77,6 +76,37 @@ public class StoreConverter {
             list.add(readAbleStoreAddress);
         }
         return list;
+    }
+
+
+    public ReadAbleProduct convertToReadable(Product product) {
+        if (product == null) return null;
+
+        ReadAbleProduct readAbleProduct = new ReadAbleProduct();
+        readAbleProduct.setId(product.getId());
+        readAbleProduct.setSku(product.getSku());
+        readAbleProduct.setRefSku(product.getRefSku());
+        readAbleProduct.setAvailable(product.isAvailable());
+        readAbleProduct.setActive(product.isActive());
+        readAbleProduct.setPrice(product.getPrice());
+        readAbleProduct.setQuantity(product.getQuantity());
+        readAbleProduct.setDateAvailable(product.getDateAvailable());
+        readAbleProduct.setCreatedAt(product.getCreatedAt());
+        readAbleProduct.setUpdatedAt(product.getUpdatedAt());
+
+        // Explicitly set categoryId from either field or category object
+        if (product.getCategory() != null) {
+            readAbleProduct.setCategoryId(product.getCategory().getId());
+        } else {
+            readAbleProduct.setCategoryId(product.getCategoryId());
+        }
+
+        // Optional: set merchantStoreId if you have merchantStore relation
+        if (product.getMerchantStoreId() != null) {
+            readAbleProduct.setMerchantStoreId(product.getMerchantStoreId());
+        }
+
+        return readAbleProduct;
     }
 
 }
