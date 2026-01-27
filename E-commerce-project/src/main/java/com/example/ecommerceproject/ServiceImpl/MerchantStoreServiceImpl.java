@@ -8,10 +8,7 @@ import com.example.ecommerceproject.Exception.RoleNotFoundException;
 import com.example.ecommerceproject.Exception.UserNotFoundException;
 import com.example.ecommerceproject.Repository.MerchantStoreRepo;
 import com.example.ecommerceproject.Repository.UserRepo;
-import com.example.ecommerceproject.Service.EmailService;
-import com.example.ecommerceproject.Service.MerchantStoreService;
-import com.example.ecommerceproject.Service.RoleService;
-import com.example.ecommerceproject.Service.UserService;
+import com.example.ecommerceproject.Service.*;
 import com.example.ecommerceproject.converter.StoreConverter;
 import com.example.ecommerceproject.dto.*;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
@@ -51,6 +48,9 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private StoreConverter storeConverter;
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private FileStorageService fileStorageService;
 
     // ================= CREATE =================
     @Override
@@ -292,110 +292,67 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
     if (logo == null || logo.isEmpty()) {
         throw new MerchantStoreNotFoundException("Logo file is required");
     }
+
     MerchantStore store = merchantStoreRepo.findById(storeId)
-            .orElseThrow(() -> new RuntimeException("Store not found"));
+            .orElseThrow(() -> new MerchantStoreNotFoundException("Store not found"));
+
     if (Boolean.TRUE.equals(store.getIsDelete())) {
         throw new RuntimeException("Cannot upload logo for deleted store");
     }
-    Path storeDir = Paths.get("uploads", "stores", store.getStoreCode());
 
-    try {
-        Files.createDirectories(storeDir);
+    String directory = "stores/" + store.getStoreCode();
 
-        // 🔥 DELETE ALL OLD LOGOS (IMPORTANT FIX)
-        Files.list(storeDir)
-                .filter(Files::isRegularFile)
-                .forEach(file -> {
-                    try {
-                        Files.delete(file);
-                    } catch (IOException e) {
-                        throw new RuntimeException("Failed to delete old logo");
-                    }
-                });
-
-        // 🔥 SAVE NEW LOGO
-        String originalFileName = logo.getOriginalFilename();
-        String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
-
-        String newFileName = "logo_" + System.currentTimeMillis() + extension;
-        Path newFilePath = storeDir.resolve(newFileName);
-
-        Files.write(newFilePath, logo.getBytes());
-
-        // 🔥 UPDATE DB
-        store.setLogo(newFileName);
-        store.setUpdatedAt(LocalDateTime.now());
-        merchantStoreRepo.save(store);
-
-        return "Store logo uploaded successfully";
-
-    } catch (IOException e) {
-        throw new RuntimeException("Failed to upload logo", e);
+    // Delete old logo if exists
+    if (store.getLogo() != null && !store.getLogo().isBlank()) {
+        fileStorageService.deleteFile(directory, store.getLogo());
     }
+
+    // Save new logo
+    String originalFileName = logo.getOriginalFilename();
+    String extension = originalFileName.substring(originalFileName.lastIndexOf("."));
+    String newFileName = "logo_" + System.currentTimeMillis() + extension;
+
+    fileStorageService.uploadFile(logo, directory, newFileName);
+
+    // Update DB
+    store.setLogo(newFileName);
+    store.setUpdatedAt(LocalDateTime.now());
+    merchantStoreRepo.save(store);
+
+    return "Store logo uploaded successfully";
 }
-    //================ DOWNLOAD STORE LOGO ============
+
+    // ================= DOWNLOAD LOGO =====================
     @Override
     public Resource downloadStoreLogo(Long storeId) {
-
         MerchantStore store = merchantStoreRepo.findById(storeId)
-                .orElseThrow(() -> new RuntimeException("Merchant store not found"));
+                .orElseThrow(() -> new MerchantStoreNotFoundException("Store not found"));
 
         if (store.getLogo() == null || store.getLogo().isBlank()) {
             throw new RuntimeException("Logo not found for store");
         }
-
-        try {
-            // ✅ SAME PATH as upload
-            Path filePath = Paths.get(
-                    "uploads",
-                    "stores",
-                    store.getStoreCode(),
-                    store.getLogo()
-            ).toAbsolutePath();
-
-            if (!Files.exists(filePath)) {
-                throw new RuntimeException("Logo file not found on server: " + filePath);
-            }
-            return (Resource) new UrlResource(filePath.toUri());
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Error loading logo file", e);
-        }
+        String directory = "stores/" + store.getStoreCode();
+        return fileStorageService.downloadFile(directory, store.getLogo());
     }
 
-    // ===============DELETE STORE LOGO ==========================================
+    // ================= DELETE LOGO =====================
     @Override
     public String deleteStoreLogo(Long storeId) {
-
         MerchantStore store = merchantStoreRepo.findById(storeId)
-                .orElseThrow(() ->
-                        new MerchantStoreNotFoundException("Store not found with id: " + storeId));
-
-        deleteFile(store.getStoreName(),store.getLogo());
+                .orElseThrow(() -> new MerchantStoreNotFoundException("Store not found"));
 
         if (store.getLogo() == null || store.getLogo().isBlank()) {
             throw new MerchantStoreNotFoundException("No logo found for this store");
         }
 
+        String directory = "stores/" + store.getStoreCode();
+        fileStorageService.deleteFile(directory, store.getLogo());
+
         store.setLogo(null);
         store.setUpdatedAt(LocalDateTime.now());
         merchantStoreRepo.save(store);
+
         return "Store logo deleted successfully";
-    }
-
-    public void deleteFile(String path, String fileName) {
-
-        String storeName = path.replaceAll("\\s+", "_");
-        Path logoPath = Paths.get("uploads/stores/", storeName, fileName);
-
-        try {
-            if (Files.exists(logoPath)) {
-                Files.delete(logoPath);
-            }
-        }
-        catch (IOException e){
-            System.out.println(e);
-        }
     }
 }
 

@@ -18,6 +18,7 @@ public class ReadAbleCategory {
     private boolean isActive;
     private List<ReadAbleProduct> products;
 
+    private List<ReadAbleCategoryDescription> categoryDescriptions;
     public Long getId() {
         return id;
     }
@@ -104,5 +105,13 @@ public class ReadAbleCategory {
 
     public void setProducts(List<ReadAbleProduct> products) {
         this.products = products;
+    }
+
+    public List<ReadAbleCategoryDescription> getCategoryDescriptions() {
+        return categoryDescriptions;
+    }
+
+    public void setCategoryDescriptions(List<ReadAbleCategoryDescription> categoryDescriptions) {
+        this.categoryDescriptions = categoryDescriptions;
     }
 }
