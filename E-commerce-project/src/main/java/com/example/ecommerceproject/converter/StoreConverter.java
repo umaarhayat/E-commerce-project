@@ -1,9 +1,6 @@
 package com.example.ecommerceproject.converter;
 
-import com.example.ecommerceproject.Entity.Product;
-import com.example.ecommerceproject.Entity.Role;
-import com.example.ecommerceproject.Entity.StoreAddress;
-import com.example.ecommerceproject.Entity.User;
+import com.example.ecommerceproject.Entity.*;
 import com.example.ecommerceproject.dto.*;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
 import org.springframework.stereotype.Component;
@@ -78,35 +75,86 @@ public class StoreConverter {
         return list;
     }
 
-
     public ReadAbleProduct convertToReadable(Product product) {
         if (product == null) return null;
 
-        ReadAbleProduct readAbleProduct = new ReadAbleProduct();
-        readAbleProduct.setId(product.getId());
-        readAbleProduct.setSku(product.getSku());
-        readAbleProduct.setRefSku(product.getRefSku());
-        readAbleProduct.setAvailable(product.isAvailable());
-        readAbleProduct.setActive(product.isActive());
-        readAbleProduct.setPrice(product.getPrice());
-        readAbleProduct.setQuantity(product.getQuantity());
-        readAbleProduct.setDateAvailable(product.getDateAvailable());
-        readAbleProduct.setCreatedAt(product.getCreatedAt());
-        readAbleProduct.setUpdatedAt(product.getUpdatedAt());
+        ReadAbleProduct dto = new ReadAbleProduct();
+        dto.setId(product.getId());
+        dto.setProductImage(product.getProductImage());
+        dto.setSku(product.getSku());
+        dto.setRefSku(product.getRefSku());
+        dto.setAvailable(product.isAvailable());
+        dto.setActive(product.isActive());
+        dto.setPrice(product.getPrice());
+        dto.setQuantity(product.getQuantity());
+        dto.setDateAvailable(product.getDateAvailable());
+        dto.setCreatedAt(product.getCreatedAt());
+        dto.setUpdatedAt(product.getUpdatedAt());
 
-        // Explicitly set categoryId from either field or category object
-        if (product.getCategory() != null) {
-            readAbleProduct.setCategoryId(product.getCategory().getId());
+        // Map IDs only
+        dto.setCategoryId(product.getCategory() != null ? product.getCategory().getId() : null);
+        dto.setMerchantStoreId(product.getMerchantStore() != null ? product.getMerchantStore().getId() : null);
+
+        // ===== Map Product Descriptions =====
+        if (product.getProductDescriptions() != null) {
+            List<ReadAbleProductDescription> readableDescriptions = new ArrayList<>();
+            for (ProductDescription desc : product.getProductDescriptions()) {
+                ReadAbleProductDescription readDto = new ReadAbleProductDescription();
+                readDto.setName(desc.getName());
+                readDto.setDescription(desc.getDescription());
+                readDto.setDescriptionType(desc.getDescriptionType());
+                readDto.setLanguage(desc.getLanguage());
+                readDto.setCreatedAt(desc.getCreatedAt());
+                readDto.setUpdatedAt(desc.getUpdatedAt());
+                readableDescriptions.add(readDto);
+
+
+            }
+            dto.setProductDescriptions(readableDescriptions);
+        }
+
+        return dto;
+    }
+
+
+    public ReadAbleCategory convertToReadable(Category category) {
+        if (category == null) return null;
+
+        ReadAbleCategory dto = new ReadAbleCategory();
+
+        // ================= Category basic fields =================
+        dto.setId(category.getId());
+        dto.setCode(category.getCode());
+        dto.setCategoryImage(category.getCategoryImage());
+        dto.setSortOrder(category.getSortOrder());
+        dto.setCategoryStatus(category.getCategoryStatus());
+        dto.setVisible(category.getVisible());
+        dto.setDepth(category.getDepth());
+        dto.setLineage(category.getLineage());
+        dto.setFeatured(category.getFeatured());
+        dto.setActive(category.getIsActive());
+
+
+        // ================= CategoryDescriptions =================
+        if (category.getCategoryDescriptions() != null && !category.getCategoryDescriptions().isEmpty()) {
+            List<ReadAbleCategoryDescription> readableDescriptions = new ArrayList<>();
+            for (CategoryDescription desc : category.getCategoryDescriptions()) {
+                ReadAbleCategoryDescription rDesc = new ReadAbleCategoryDescription();
+                rDesc.setId(desc.getId());
+                rDesc.setDescription(desc.getDescription());
+                rDesc.setDescriptionType(desc.getDescriptionType());
+                rDesc.setCreatedAt(desc.getCreatedAt());
+                rDesc.setUpdatedAt(desc.getUpdatedAt());
+                readableDescriptions.add(rDesc);
+            }
+            dto.setCategoryDescriptions(readableDescriptions);
         } else {
-            readAbleProduct.setCategoryId(product.getCategoryId());
+            dto.setCategoryDescriptions(new ArrayList<>()); // empty list if no descriptions
         }
 
-        // Optional: set merchantStoreId if you have merchantStore relation
-        if (product.getMerchantStoreId() != null) {
-            readAbleProduct.setMerchantStoreId(product.getMerchantStoreId());
-        }
-
-        return readAbleProduct;
+        return dto;
     }
 
 }
+
+

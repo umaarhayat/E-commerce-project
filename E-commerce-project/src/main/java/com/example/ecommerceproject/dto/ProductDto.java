@@ -9,8 +9,7 @@ import java.util.Date;
 public class ProductDto {
 
     private Long id;
-
-
+    private String productImage;
     private String sku;
 
     private String refSku;
@@ -18,13 +17,11 @@ public class ProductDto {
     private boolean isActive;
 
     private BigDecimal price;
-
     private int quantity;
     private Date dateAvailable;
 
-    private Long categoryId;
-
-    private Long merchantStoreId;
+    private String categoryId;
+    private String merchantStoreId;
 
     // Getters & Setters
     // ... (generate all)
@@ -94,19 +91,27 @@ public class ProductDto {
         this.dateAvailable = dateAvailable;
     }
 
-    public Long getCategoryId() {
+    public String getCategoryId() {
         return categoryId;
     }
 
-    public void setCategoryId(Long categoryId) {
+    public void setCategoryId(String categoryId) {
         this.categoryId = categoryId;
     }
 
-    public Long getMerchantStoreId() {
+    public String getMerchantStoreId() {
         return merchantStoreId;
     }
 
-    public void setMerchantStoreId(Long merchantStoreId) {
+    public void setMerchantStoreId(String merchantStoreId) {
         this.merchantStoreId = merchantStoreId;
+    }
+
+    public String getProductImage() {
+        return productImage;
+    }
+
+    public void setProductImage(String productImage) {
+        this.productImage = productImage;
     }
 }
