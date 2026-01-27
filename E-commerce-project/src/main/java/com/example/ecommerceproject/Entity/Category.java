@@ -1,6 +1,6 @@
 package com.example.ecommerceproject.Entity;
-import jakarta.persistence.*;
 
+import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -11,41 +11,47 @@ public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Long id;
+    @Column(name = "code")
     private String code;
+    @Column(name = "category_image")
     private String categoryImage;
+    @Column(name = "sort_order")
     private Integer sortOrder;
-    private boolean categoryStatus;
-    private boolean visible;
+    @Column(name = "category_status")
+    private Boolean categoryStatus = false;
+    @Column(name = "visible")
+    private Boolean visible = true;
+    @Column(name = "depth")
     private Integer depth;
+    @Column(name = "lineage")
     private String lineage;
-    private boolean featured;
-    private boolean isActive;
+    @Column(name = "featured")
+    private Boolean featured = false;
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive = true;
 
-    @Column(name = "is_delete")
-    private boolean isDelete = false;
 
-    @Column(name = "created_at")
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "created_at", updatable = false)
     private Date createdAt = new Date();
 
-    @Column(name = "updated_at")
     @Temporal(TemporalType.TIMESTAMP)
+    @Column(name = "updated_at")
     private Date updatedAt = new Date();
 
-    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Product> products = new ArrayList<>();
+    @OneToMany(mappedBy = "category", cascade = CascadeType.REMOVE)
+    private List<Product> products;
 
-    // Getters & Setters
-    // ... generate all
 
+    @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CategoryDescription> categoryDescriptions = new ArrayList<>();
+
+    // ================= GETTERS / SETTERS =================
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getCode() {
@@ -72,19 +78,19 @@ public class Category {
         this.sortOrder = sortOrder;
     }
 
-    public boolean isCategoryStatus() {
+    public Boolean getCategoryStatus() {
         return categoryStatus;
     }
 
-    public void setCategoryStatus(boolean categoryStatus) {
+    public void setCategoryStatus(Boolean categoryStatus) {
         this.categoryStatus = categoryStatus;
     }
 
-    public boolean isVisible() {
+    public Boolean getVisible() {
         return visible;
     }
 
-    public void setVisible(boolean visible) {
+    public void setVisible(Boolean visible) {
         this.visible = visible;
     }
 
@@ -104,36 +110,24 @@ public class Category {
         this.lineage = lineage;
     }
 
-    public boolean isFeatured() {
+    public Boolean getFeatured() {
         return featured;
     }
 
-    public void setFeatured(boolean featured) {
+    public void setFeatured(Boolean featured) {
         this.featured = featured;
     }
 
-    public boolean isActive() {
+    public Boolean getIsActive() {
         return isActive;
     }
 
-    public void setActive(boolean active) {
+    public void setIsActive(Boolean active) {
         isActive = active;
-    }
-
-    public boolean isDelete() {
-        return isDelete;
-    }
-
-    public void setDelete(boolean delete) {
-        isDelete = delete;
     }
 
     public Date getCreatedAt() {
         return createdAt;
-    }
-
-    public void setCreatedAt(Date createdAt) {
-        this.createdAt = createdAt;
     }
 
     public Date getUpdatedAt() {
@@ -148,7 +142,31 @@ public class Category {
         return products;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Boolean getActive() {
+        return isActive;
+    }
+
+    public void setActive(Boolean active) {
+        isActive = active;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
+    }
+
     public void setProducts(List<Product> products) {
         this.products = products;
+    }
+
+    public List<CategoryDescription> getCategoryDescriptions() {
+        return categoryDescriptions;
+    }
+
+    public void setCategoryDescriptions(List<CategoryDescription> categoryDescriptions) {
+        this.categoryDescriptions = categoryDescriptions;
     }
 }
