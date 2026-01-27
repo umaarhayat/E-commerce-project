@@ -1,8 +1,13 @@
 package com.example.ecommerceproject.ServiceImpl;
 
+import com.example.ecommerceproject.Entity.Category;
+import com.example.ecommerceproject.Entity.MerchantStore;
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Entity.ProductDescription;
+import com.example.ecommerceproject.Exception.CategoryNotFoundException;
 import com.example.ecommerceproject.Exception.ProductNOtFoundException;
+import com.example.ecommerceproject.Repository.CategoryRepo;
+import com.example.ecommerceproject.Repository.MerchantStoreRepo;
 import com.example.ecommerceproject.Repository.ProductRepo;
 import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.Service.ProductService;
@@ -26,6 +31,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private CategoryRepo categoryRepo;
+    @Autowired
+    private MerchantStoreRepo merchantStoreRepo;
 
     @Autowired
     private StoreConverter storeConverter;
@@ -34,19 +43,32 @@ public class ProductServiceImpl implements ProductService {
     private FileStorageService fileStorageService;
     @Override
     public ReadAbleProduct createProduct(Product product) {
-        // ✅ Set Product for each description
-        if (product.getProductDescriptions() != null) {
-            for (ProductDescription desc : product.getProductDescriptions()) {
-                desc.setProduct(product); // Link description to product
-            }
+        // Set Category entity
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryRepo.findById(product.getCategory().getId())
+                    .orElseThrow(() -> new CategoryNotFoundException(
+                            "Category not found with ID: " + product.getCategory().getId()));
+            product.setCategory(category);
         }
 
-        // ✅ Save product with cascade
-        Product saved = productRepo.save(product);
+        // Set MerchantStore entity
+        if (product.getMerchantStore() != null && product.getMerchantStore().getId() != null) {
+            MerchantStore store = merchantStoreRepo.findById(product.getMerchantStore().getId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Merchant Store not found with ID: " + product.getMerchantStore().getId()));
+            product.setMerchantStore(store);
+        }
 
-        // ✅ Convert to DTO
-        return storeConverter.convertToReadable(saved);
+        // Set Product for each description
+        if (product.getProductDescriptions() != null) {
+            for (ProductDescription desc : product.getProductDescriptions()) {
+                desc.setProduct(product); // link description to product
+            }
+        }
+        Product saved = productRepo.save(product);
+        return storeConverter.convertToReadable(saved); // Now categoryId & merchantStoreId won't be null
     }
+
 
 
 

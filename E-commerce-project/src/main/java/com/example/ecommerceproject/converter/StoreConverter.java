@@ -104,7 +104,10 @@ public class StoreConverter {
                 readDto.setDescription(desc.getDescription());
                 readDto.setDescriptionType(desc.getDescriptionType());
                 readDto.setLanguage(desc.getLanguage());
+                readDto.setCreatedAt(desc.getCreatedAt());
+                readDto.setUpdatedAt(desc.getUpdatedAt());
                 readableDescriptions.add(readDto);
+
 
             }
             dto.setProductDescriptions(readableDescriptions);
