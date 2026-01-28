@@ -2,7 +2,7 @@ package com.example.ecommerceproject.Controller;
 
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Service.ProductService;
-import com.example.ecommerceproject.dto.ReadAbleProduct;
+import com.example.ecommerceproject.dto.GenericResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -10,8 +10,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -21,41 +19,58 @@ public class ProductController {
     private ProductService productService;
 
     @PostMapping
-    public ResponseEntity<ReadAbleProduct> createProduct(@RequestBody Product product) {
-        return ResponseEntity.ok(productService.createProduct(product));
+    public GenericResponse createProduct(@RequestBody Product product) {
+        return GenericResponse.success(
+                productService.createProduct(product),
+                "Product created successfully"
+        );
     }
 
     @GetMapping
-    public ResponseEntity<List<ReadAbleProduct>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    public GenericResponse getAllProducts() {
+        return GenericResponse.success(
+                productService.getAllProducts(),
+                "Products fetched successfully"
+        );
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ReadAbleProduct> getProductById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getProductById(id));
+    public GenericResponse getProductById(@PathVariable Long id) {
+        return GenericResponse.success(
+                productService.getProductById(id),
+                "Product fetched successfully"
+        );
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ReadAbleProduct> updateProduct(@PathVariable Long id, @RequestBody Product product) {
-        return ResponseEntity.ok(productService.updateProduct(id, product));
+    public GenericResponse updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product product
+    ) {
+        return GenericResponse.success(
+                productService.updateProduct(id, product),
+                "Product updated successfully"
+        );
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+    public GenericResponse deleteProduct(@PathVariable Long id) {
         productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+        return GenericResponse.success(null, "Product deleted successfully"
+        );
     }
 
-
-
     // ================= UPLOAD PRODUCT IMAGE =================
-    @PostMapping("/{productId}/image")
-    public ResponseEntity<String> uploadProductImage(
+    @PostMapping("/{productId}/image/upload")
+    public GenericResponse uploadProductImage(
             @PathVariable Long productId,
             @RequestParam("file") MultipartFile file
     ) {
-        String message = productService.uploadProductImage(productId, file);
-        return ResponseEntity.ok(message);
+        String imageName = productService.uploadProductImage(productId, file);
+
+        return GenericResponse.success(imageName,
+                "Product image uploaded successfully"
+        );
     }
 
     // ================= DOWNLOAD PRODUCT IMAGE =================
@@ -66,7 +81,7 @@ public class ProductController {
         Resource resource = productService.downloadProductImage(productId);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.IMAGE_JPEG) // or OCTET_STREAM
+                .contentType(MediaType.IMAGE_JPEG)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         "inline; filename=\"" + resource.getFilename() + "\""
@@ -76,10 +91,15 @@ public class ProductController {
 
     // ================= DELETE PRODUCT IMAGE =================
     @DeleteMapping("/{productId}/image")
-    public ResponseEntity<String> deleteProductImage(
+    public GenericResponse deleteProductImage(
             @PathVariable Long productId
     ) {
-        String message = productService.deleteProductImage(productId);
-        return ResponseEntity.ok(message);
+        String deletedImage = productService.deleteProductImage(productId);
+
+        return GenericResponse.success(
+                deletedImage,
+                "Product image deleted successfully"
+        );
     }
+
 }

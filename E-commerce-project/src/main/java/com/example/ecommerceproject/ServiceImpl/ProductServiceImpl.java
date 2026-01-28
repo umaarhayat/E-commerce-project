@@ -1,8 +1,13 @@
 package com.example.ecommerceproject.ServiceImpl;
 
+import com.example.ecommerceproject.Entity.Category;
+import com.example.ecommerceproject.Entity.MerchantStore;
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Entity.ProductDescription;
+import com.example.ecommerceproject.Exception.CategoryNotFoundException;
 import com.example.ecommerceproject.Exception.ProductNOtFoundException;
+import com.example.ecommerceproject.Repository.CategoryRepo;
+import com.example.ecommerceproject.Repository.MerchantStoreRepo;
 import com.example.ecommerceproject.Repository.ProductRepo;
 import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.Service.ProductService;
@@ -14,6 +19,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +32,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ModelMapper modelMapper;
+    @Autowired
+    private CategoryRepo categoryRepo;
+    @Autowired
+    private MerchantStoreRepo merchantStoreRepo;
 
     @Autowired
     private StoreConverter storeConverter;
@@ -34,21 +44,32 @@ public class ProductServiceImpl implements ProductService {
     private FileStorageService fileStorageService;
     @Override
     public ReadAbleProduct createProduct(Product product) {
-        // ✅ Set Product for each description
+        // Set Category entity
+        if (product.getCategory() != null && product.getCategory().getId() != null) {
+            Category category = categoryRepo.findById(product.getCategory().getId())
+                    .orElseThrow(() -> new CategoryNotFoundException(
+                            "Category not found with ID: " + product.getCategory().getId()));
+            product.setCategory(category);
+        }
+
+        // Set MerchantStore entity
+        if (product.getMerchantStore() != null && product.getMerchantStore().getId() != null) {
+            MerchantStore store = merchantStoreRepo.findById(product.getMerchantStore().getId())
+                    .orElseThrow(() -> new RuntimeException(
+                            "Merchant Store not found with ID: " + product.getMerchantStore().getId()));
+            product.setMerchantStore(store);
+        }
+
+        // Set Product for each description
         if (product.getProductDescriptions() != null) {
             for (ProductDescription desc : product.getProductDescriptions()) {
-                desc.setProduct(product); // Link description to product
+                desc.setProduct(product); // link description to product
             }
         }
 
-        // ✅ Save product with cascade
         Product saved = productRepo.save(product);
-
-        // ✅ Convert to DTO
-        return storeConverter.convertToReadable(saved);
+        return storeConverter.convertToReadable(saved); // Now categoryId & merchantStoreId won't be null
     }
-
-
 
     @Override
     public List<ReadAbleProduct> getAllProducts() {
@@ -101,28 +122,30 @@ public class ProductServiceImpl implements ProductService {
         // Remove product (descriptions will be deleted automatically if cascade = REMOVE is set)
         productRepo.delete(existing);
     }
-
-
     // image crud
 
     @Override
     public String uploadProductImage(Long productId, MultipartFile file) {
-
+        // 1. Fetch product or throw exception
         Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNOtFoundException("Product not found with ID: " + productId));
 
+        // 2. Define upload directory
         String directory = "products";
+
+        // 3. Get original file name
         String fileName = file.getOriginalFilename();
 
+
         fileStorageService.uploadFile(file, directory, fileName);
-        // YAHI LINE IMPORTANT HAI
         product.setProductImage(fileName);
 
         product.setUpdatedAt(new Date());
         productRepo.save(product);
-
-        return "Product image uploaded successfully";
+        // 8. Return success message including file name (like category)
+        return "Product image uploaded successfully: " + fileName;
     }
+
 
     @Override
     public Resource downloadProductImage(Long productId) {
@@ -161,5 +184,21 @@ public class ProductServiceImpl implements ProductService {
                 : "Image not found on disk but DB updated";
     }
 
+  /*
+  # Fetch all products for a selected category using categoryId
+ */
+    @Override
+    public List<ReadAbleProduct> getProductsByCategoryId(Long categoryId) {
+        List<Product> productList =
+                productRepo.findByCategoryId(categoryId);
+        List<ReadAbleProduct> readableProducts = new ArrayList<>();
+        for (Product product : productList) {
+            ReadAbleProduct readableProduct =
+                    modelMapper.map(product, ReadAbleProduct.class);
+            readableProducts.add(readableProduct);
+        }
+
+        return readableProducts;
+    }
 
 }
