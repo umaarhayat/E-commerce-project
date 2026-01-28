@@ -19,6 +19,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,12 +66,10 @@ public class ProductServiceImpl implements ProductService {
                 desc.setProduct(product); // link description to product
             }
         }
+
         Product saved = productRepo.save(product);
         return storeConverter.convertToReadable(saved); // Now categoryId & merchantStoreId won't be null
     }
-
-
-
 
     @Override
     public List<ReadAbleProduct> getAllProducts() {
@@ -123,28 +122,30 @@ public class ProductServiceImpl implements ProductService {
         // Remove product (descriptions will be deleted automatically if cascade = REMOVE is set)
         productRepo.delete(existing);
     }
-
-
     // image crud
 
     @Override
     public String uploadProductImage(Long productId, MultipartFile file) {
-
+        // 1. Fetch product or throw exception
         Product product = productRepo.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found"));
+                .orElseThrow(() -> new ProductNOtFoundException("Product not found with ID: " + productId));
 
+        // 2. Define upload directory
         String directory = "products";
+
+        // 3. Get original file name
         String fileName = file.getOriginalFilename();
 
+
         fileStorageService.uploadFile(file, directory, fileName);
-        // YAHI LINE IMPORTANT HAI
         product.setProductImage(fileName);
 
         product.setUpdatedAt(new Date());
         productRepo.save(product);
-
-        return "Product image uploaded successfully";
+        // 8. Return success message including file name (like category)
+        return "Product image uploaded successfully: " + fileName;
     }
+
 
     @Override
     public Resource downloadProductImage(Long productId) {
@@ -183,5 +184,21 @@ public class ProductServiceImpl implements ProductService {
                 : "Image not found on disk but DB updated";
     }
 
+  /*
+  # Fetch all products for a selected category using categoryId
+ */
+    @Override
+    public List<ReadAbleProduct> getProductsByCategoryId(Long categoryId) {
+        List<Product> productList =
+                productRepo.findByCategoryId(categoryId);
+        List<ReadAbleProduct> readableProducts = new ArrayList<>();
+        for (Product product : productList) {
+            ReadAbleProduct readableProduct =
+                    modelMapper.map(product, ReadAbleProduct.class);
+            readableProducts.add(readableProduct);
+        }
+
+        return readableProducts;
+    }
 
 }
