@@ -1,5 +1,7 @@
 package com.example.ecommerceproject.dto;
 
+import jakarta.persistence.Column;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -7,6 +9,7 @@ import java.util.List;
 public class MerchantStoreDto {
     private Long id;
     private String storeName;
+    private String storeCode;
     private String description;
     private String logo;   // sirf file name save hoga
     private String logoUrl;
@@ -161,5 +164,13 @@ public class MerchantStoreDto {
 
     public void setLogo(String logo) {
         this.logo = logo;
+    }
+
+    public String getStoreCode() {
+        return storeCode;
+    }
+
+    public void setStoreCode(String storeCode) {
+        this.storeCode = storeCode;
     }
 }

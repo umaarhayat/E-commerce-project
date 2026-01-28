@@ -1,10 +1,12 @@
 package com.example.ecommerceproject.Service;
 
+import com.example.ecommerceproject.dto.ReadAbleMerchantStore;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface MerchantStoreService {
@@ -31,4 +33,9 @@ public interface MerchantStoreService {
     String uploadStoreLogo(Long storeId, MultipartFile logo);
     Resource downloadStoreLogo(Long storeId);
     String deleteStoreLogo(Long storeId);
+
+    List<ReadAbleMerchantStore> getStores(String storeCode,
+                                          String storeName,
+                                          LocalDate storeCreationDate);
+
 }

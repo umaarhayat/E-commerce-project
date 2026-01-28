@@ -1,9 +1,11 @@
 package com.example.ecommerceproject.dto;
 
+import jakarta.persistence.Column;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -13,6 +15,7 @@ public class ReadAbleMerchantStore {
 
     private Long id;
     private String storeName;
+    private String storeCode;
     private String description;
     private String logo;
     private String logoUrl;
@@ -24,6 +27,8 @@ public class ReadAbleMerchantStore {
     private String address;
     private Boolean isDelete = false;
     private Boolean isActive = true; // default true
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
 
 
@@ -152,4 +157,31 @@ public class ReadAbleMerchantStore {
     public void setLogo(String logo) {
         this.logo = logo;
     }
+
+    public String getStoreCode() {
+        return storeCode;
+    }
+
+    public void setStoreCode(String storeCode) {
+        this.storeCode = storeCode;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+
+
 }

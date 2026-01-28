@@ -15,17 +15,12 @@ import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.dto.ReadAbleUser;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -354,5 +349,77 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
 
         return "Store logo deleted successfully";
     }
+
+
+    @Override
+    public List<ReadAbleMerchantStore> getStores(
+            String storeCode,
+            String storeName,
+            LocalDate storeCreationDate) {
+
+        List<MerchantStore> storeList;
+
+        // Fetch all stores or filter by params
+        if (storeCode == null && storeName == null && storeCreationDate == null) {
+            storeList = merchantStoreRepo.findAll();
+        } else {
+            storeList = merchantStoreRepo.searchStores(storeCode, storeName, storeCreationDate);
+        }
+
+        List<ReadAbleMerchantStore> readableStores = new ArrayList<>();
+
+        for (MerchantStore store : storeList) {
+            if (store != null) {
+                ReadAbleMerchantStore dto = new ReadAbleMerchantStore();
+
+                // ---- Direct Fields ----
+                dto.setId(store.getId());
+                dto.setStoreName(store.getStoreName());
+                dto.setStoreCode(store.getStoreCode());
+                dto.setDescription(store.getDescription());
+                dto.setLogo(store.getLogo());
+                dto.setLogoUrl(store.getLogoUrl());
+                dto.setOwnerName(store.getOwnerName());
+                dto.setOwnerEmail(store.getOwnerEmail());
+                dto.setPhone(store.getPhone());
+                dto.setCountry(store.getCountry());
+                dto.setCity(store.getCity());
+                dto.setAddress(store.getAddress());
+                dto.setCreatedAt(store.getCreatedAt());
+                dto.setUpdatedAt(store.getUpdatedAt());
+                dto.setIsDelete(store.getIsDelete());
+                dto.setActive(store.getIsActive());
+
+                // ---- Nested User ----
+                if (store.getUser() != null) {
+                    ReadAbleUser readAbleUser = new ReadAbleUser();
+                    readAbleUser.setId(store.getUser().getId());
+                    readAbleUser.setUserName(store.getUser().getUserName());
+                    readAbleUser.setEmail(store.getUser().getEmail());
+                    dto.setReadAbleUser(readAbleUser);
+                }
+
+                // ---- Nested Addresses ----
+                if (store.getAddresses() != null && !store.getAddresses().isEmpty()) {
+                    List<ReadAbleStoreAddress> addressList = new ArrayList<>();
+                    for (StoreAddress addr : store.getAddresses()) {
+                        ReadAbleStoreAddress addressDto = new ReadAbleStoreAddress();
+                        addressDto.setId(addr.getId());
+                        addressDto.setAddress(addr.getAddress());
+                        addressDto.setCity(addr.getCity());
+                        addressDto.setCountry(addr.getCountry());
+                        addressList.add(addressDto);
+                    }
+                    dto.setStoreAddresses(addressList);
+                }
+
+                readableStores.add(dto);
+            }
+        }
+
+        return readableStores;
+    }
+
+
 }
 

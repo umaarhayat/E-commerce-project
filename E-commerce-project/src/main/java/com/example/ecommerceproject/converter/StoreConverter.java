@@ -33,9 +33,11 @@ public class StoreConverter {
 
         // -------- Store --------
         ReadAbleMerchantStore readAbleStore = new ReadAbleMerchantStore();
+
         if (storeDto != null) {
             readAbleStore.setId(storeDto.getId());
             readAbleStore.setStoreName(storeDto.getStoreName());
+            readAbleStore.setStoreCode(storeDto.getStoreCode());
             readAbleStore.setDescription(storeDto.getDescription());
             readAbleStore.setLogoUrl(storeDto.getLogoUrl());
             readAbleStore.setOwnerName(storeDto.getOwnerName());
@@ -44,10 +46,14 @@ public class StoreConverter {
             readAbleStore.setCountry(storeDto.getCountry());
             readAbleStore.setCity(storeDto.getCity());
             readAbleStore.setAddress(storeDto.getAddress());
+            readAbleStore.setCreatedAt(storeDto.getCreatedAt());
+            readAbleStore.setUpdatedAt(storeDto.getUpdatedAt());
 
-            // Convert addresses
+            // Convert nested addresses if exist
             if (storeDto.getStoreAddresses() != null) {
-                readAbleStore.setStoreAddresses(convertAddressesFromDto(storeDto.getStoreAddresses()));
+                readAbleStore.setStoreAddresses(
+                        convertAddressesFromDto(storeDto.getStoreAddresses())
+                );
             }
         }
 
