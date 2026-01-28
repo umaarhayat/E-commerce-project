@@ -19,6 +19,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -183,5 +184,21 @@ public class ProductServiceImpl implements ProductService {
                 : "Image not found on disk but DB updated";
     }
 
+  /*
+  # Fetch all products for a selected category using categoryId
+ */
+    @Override
+    public List<ReadAbleProduct> getProductsByCategoryId(Long categoryId) {
+        List<Product> productList =
+                productRepo.findByCategoryId(categoryId);
+        List<ReadAbleProduct> readableProducts = new ArrayList<>();
+        for (Product product : productList) {
+            ReadAbleProduct readableProduct =
+                    modelMapper.map(product, ReadAbleProduct.class);
+            readableProducts.add(readableProduct);
+        }
+
+        return readableProducts;
+    }
 
 }

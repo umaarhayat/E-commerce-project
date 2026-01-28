@@ -25,9 +25,14 @@ public interface ProductService {
     void deleteProduct(Long id);
 
 
+    // image crud operation
     String uploadProductImage(Long productId, MultipartFile file);
 
     Resource downloadProductImage(Long productId);
 
     String deleteProductImage(Long productId);
+
+    // categoryId getAllProduct
+
+    List<ReadAbleProduct> getProductsByCategoryId(Long categoryId);
 }

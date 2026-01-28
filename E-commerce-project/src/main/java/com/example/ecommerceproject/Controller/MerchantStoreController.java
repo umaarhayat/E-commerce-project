@@ -3,6 +3,7 @@ package com.example.ecommerceproject.Controller;
 import com.example.ecommerceproject.Service.MerchantStoreService;
 import com.example.ecommerceproject.Service.UserService;
 import com.example.ecommerceproject.dto.GenericResponse;
+import com.example.ecommerceproject.dto.ReadAbleMerchantStore;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
 import org.springframework.core.io.Resource;
@@ -14,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -28,16 +30,12 @@ public class MerchantStoreController {
 
     // ================= CREATE =================
     @PostMapping
-    public ResponseEntity<GenericResponse<ReadableMerchantStore>> createMerchantStore(
-            @RequestBody PersistableMerchanStore persistable) {
+    public GenericResponse createMerchantStore(@RequestBody PersistableMerchanStore persistable) {
         ReadableMerchantStore store = merchantStoreService.createMerchantStore(persistable);
-        return ResponseEntity.ok(
-                GenericResponse.success(store, "Store created successfully and email sent")
-        );
+        return GenericResponse.success(store, "Store created successfully and email sent");
     }
-
     // ================= GET ALL =================
-    @GetMapping
+    @GetMapping("/all")
     public GenericResponse<List<ReadableMerchantStore>> getAllStores() {
         List<ReadableMerchantStore> stores = merchantStoreService.getAllMerchantStore();
         return GenericResponse.success(stores, "All Merchant Stores retrieved successfully");
@@ -97,16 +95,21 @@ public class MerchantStoreController {
     // ================= POST UPLOADING LOGO =================
     @PostMapping(value = "/{storeId}/upload-logo",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> uploadLogo(@RequestParam(value = "logo", required = false) MultipartFile logo,@PathVariable long
-                                             storeId) {
+    public GenericResponse uploadLogo(
+            @RequestParam(value = "logo", required = false) MultipartFile logo,
+            @PathVariable long storeId
+    ) {
         if (logo == null || logo.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
-                    .body("Logo file is required");
+            return GenericResponse.error("Logo file is required", "FILE_REQUIRED");
         }
-        merchantStoreService.uploadStoreLogo(storeId,logo);
-        return ResponseEntity.ok("Logo uploaded successfully");
+
+        // Upload image and get stored filename
+        String uploadedFileName = merchantStoreService.uploadStoreLogo(storeId, logo);
+
+        return GenericResponse.success(uploadedFileName, "Logo uploaded successfully");
     }
+
+
 
     @GetMapping("/{storeId}/download-logo")
     public ResponseEntity<?> downloadStoreLogo(@PathVariable Long storeId) {
@@ -127,17 +130,31 @@ public class MerchantStoreController {
 
     // ================= DELETE STORE LOGO =================
     @DeleteMapping("/{storeId}/delete-logo")
-    public ResponseEntity<GenericResponse<String>> deleteStoreLogo(@PathVariable Long storeId) {
-        String message = merchantStoreService.deleteStoreLogo(storeId);
+    public GenericResponse deleteStoreLogo(@PathVariable Long storeId) {
+        String deletedLogoName = merchantStoreService.deleteStoreLogo(storeId);
 
-        if (message == null) {
-            return ResponseEntity.ok(
-                    GenericResponse.error("No logo found for this store", "LOGO_NOT_FOUND")
-            );
+        if (deletedLogoName == null) {
+            return GenericResponse.error("No logo found for this store", "LOGO_NOT_FOUND");
         }
-        return ResponseEntity.ok(
-                GenericResponse.success(message, "Logo deleted successfully")
+
+        return GenericResponse.success(deletedLogoName, "Logo deleted successfully");
+    }
+
+// ========== optional get merchantStore storeName AND storeCode and storeCreationDate
+    @GetMapping
+    public GenericResponse<List<ReadAbleMerchantStore>> getStores(
+            @RequestParam(required = false) String storeCode,
+            @RequestParam(required = false) String storeName,
+            @RequestParam(required = false) LocalDate storeCreationDate) {
+
+        List<ReadAbleMerchantStore> stores =
+                merchantStoreService.getStores(storeCode, storeName, storeCreationDate);
+
+        return GenericResponse.success(
+                stores,
+                "Stores fetched successfully"
         );
     }
+
 
 }

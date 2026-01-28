@@ -2,8 +2,10 @@ package com.example.ecommerceproject.Controller;
 
 import com.example.ecommerceproject.Entity.Category;
 import com.example.ecommerceproject.Service.CategoryService;
+import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.dto.GenericResponse;
 import com.example.ecommerceproject.dto.ReadAbleCategory;
+import com.example.ecommerceproject.dto.ReadAbleProduct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -22,6 +24,8 @@ public class CategoryController {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private ProductService productService;
 
     // ========== Create Category ==========
     @PostMapping
@@ -120,5 +124,20 @@ public class CategoryController {
                 "Category image deleted successfully"
         );
     }
+/*
+  # Fetch all products for a selected category using categoryId
+ */
 
+    @GetMapping("/{categoryId}/products")
+    public GenericResponse<List<ReadAbleProduct>> getProductsByCategory(
+            @PathVariable Long categoryId) {
+
+        List<ReadAbleProduct> products =
+                productService.getProductsByCategoryId(categoryId);
+
+        return GenericResponse.success(
+                products,
+                "Products fetched successfully for selected category"
+        );
+    }
 }

@@ -154,6 +154,7 @@ public class CategoryServiceImpl implements CategoryService {
         return deleted ? "Category image deleted successfully" :
                 "Image file not found on server, but category record cleared";
     }
+
 }
 
 
