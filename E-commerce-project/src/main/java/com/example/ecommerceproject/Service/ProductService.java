@@ -32,6 +32,13 @@ public interface ProductService {
     String deleteProductImage(Long productId);
 
     // categoryId getAllProduct
-
     List<ReadAbleProduct> getProductsByCategoryId(Long categoryId);
+
+
+    List<ReadAbleProduct> getProducts(String storeCode,
+                                      String storeName,
+                                      Long productId,
+                                      String productName,
+                                      String categoryName,
+                                      Long categoryId);
 }

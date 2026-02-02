@@ -86,6 +86,7 @@ public class StoreConverter {
 
         ReadAbleProduct dto = new ReadAbleProduct();
         dto.setId(product.getId());
+        dto.setProductName(product.getProductName());
         dto.setProductImage(product.getProductImage());
         dto.setSku(product.getSku());
         dto.setRefSku(product.getRefSku());
@@ -130,6 +131,7 @@ public class StoreConverter {
 
         // ================= Category basic fields =================
         dto.setId(category.getId());
+        dto.setCategoryName(category.getCategoryName());
         dto.setCode(category.getCode());
         dto.setCategoryImage(category.getCategoryImage());
         dto.setSortOrder(category.getSortOrder());

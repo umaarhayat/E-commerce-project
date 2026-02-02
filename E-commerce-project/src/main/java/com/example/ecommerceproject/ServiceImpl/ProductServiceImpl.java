@@ -14,6 +14,7 @@ import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.converter.StoreConverter;
 import com.example.ecommerceproject.dto.ReadAbleProduct;
+import com.example.ecommerceproject.specification.impl.ProductSpecification;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -40,9 +41,12 @@ public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private StoreConverter storeConverter;
+    @Autowired
+    private ProductSpecification productSpecfication;
 
     @Autowired
     private FileStorageService fileStorageService;
+
     @Override
     public ReadAbleProduct createProduct(Product product) {
         // Set Category entity
@@ -96,6 +100,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ProductNOtFoundException(
                         "Product not found with ID: " + id));
 
+        existing.setProductName(productDetails.getProductName());
         existing.setProductImage(productDetails.getProductImage());
         existing.setSku(productDetails.getSku());
         existing.setRefSku(productDetails.getRefSku());
@@ -196,6 +201,7 @@ public class ProductServiceImpl implements ProductService {
                 product.getProductImage()
         );
     }
+
     @Override
     public String deleteProductImage(Long productId) {
         Product product = productRepo.findById(productId)
@@ -219,9 +225,9 @@ public class ProductServiceImpl implements ProductService {
                 : "Image not found on disk but DB updated";
     }
 
-  /*
-  # Fetch all products for a selected category using categoryId
- */
+    /*
+    # Fetch all products for a selected category using categoryId
+   */
     @Override
     public List<ReadAbleProduct> getProductsByCategoryId(Long categoryId) {
         List<Product> productList =
@@ -236,4 +242,61 @@ public class ProductServiceImpl implements ProductService {
         return readableProducts;
     }
 
+    @Override
+    public List<ReadAbleProduct> getProducts(String storeCode,
+                                             String storeName,
+                                             Long productId,
+                                             String productName,
+                                             String categoryName,
+                                             Long categoryId) {
+
+        // Use specification to filter products
+        List<Product> products = productRepo.findAll(
+                productSpecfication.searchProduct(storeCode, storeName, productId, productName, categoryName, categoryId)
+        );
+
+        // Map entity to ReadAble DTO
+        return products.stream()
+                .map(this::mapToReadAbleProduct)
+                .collect(Collectors.toList());
+    }
+
+    private ReadAbleProduct mapToReadAbleProduct(Product product) {
+        ReadAbleProduct dto = new ReadAbleProduct();
+
+        dto.setId(product.getId());
+        dto.setProductName(product.getProductDescriptions() != null && !product.getProductDescriptions().isEmpty() ?
+                product.getProductDescriptions().get(0).getName() : product.getSku()); // Fallback to SKU if name not available
+        dto.setSku(product.getSku());
+        dto.setRefSku(product.getRefSku());
+        dto.setAvailable(product.isAvailable());
+        dto.setActive(product.isActive());
+        dto.setPrice(product.getPrice());
+        dto.setQuantity(product.getQuantity());
+        dto.setDateAvailable(product.getDateAvailable());
+        dto.setCreatedAt(product.getCreatedAt());
+        dto.setUpdatedAt(product.getUpdatedAt());
+
+        if (product.getCategory() != null) {
+            dto.setCategoryId(product.getCategory().getId());
+            dto.setCategoryName(product.getCategory().getCategoryName());
+        }
+
+        if (product.getMerchantStore() != null) {
+            dto.setMerchantStoreId(product.getMerchantStore().getId());
+            dto.setStoreCode(product.getMerchantStore().getStoreCode());
+            dto.setStoreName(product.getMerchantStore().getStoreName());
+        }
+
+        dto.setProductImage(product.getProductImage());
+
+        return dto;
+    }
 }
+
+
+
+
+
+
+

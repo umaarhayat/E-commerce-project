@@ -1,5 +1,6 @@
 package com.example.ecommerceproject.Entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,6 +14,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id")
     private Long id;
+
+    @Column(name = "categoryName")
+    private String categoryName;
     @Column(name = "code")
     private String code;
     @Column(name = "category_image")
@@ -168,5 +172,13 @@ public class Category {
 
     public void setCategoryDescriptions(List<CategoryDescription> categoryDescriptions) {
         this.categoryDescriptions = categoryDescriptions;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }

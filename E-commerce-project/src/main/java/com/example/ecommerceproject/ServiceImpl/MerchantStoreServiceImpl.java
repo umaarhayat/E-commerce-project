@@ -15,9 +15,11 @@ import com.example.ecommerceproject.dto.*;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.dto.ReadAbleUser;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
+import com.example.ecommerceproject.specification.MerchantStoreSpecification;
 import org.springframework.core.io.Resource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -44,6 +46,10 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private StoreConverter storeConverter;
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private MerchantStoreSpecification merchantStoreSpecification;
+
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -370,6 +376,75 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
     }
 
 
+//    @Override
+//    public List<ReadAbleMerchantStore> getStores(
+//            String storeCode,
+//            String storeName,
+//            LocalDate storeCreationDate) {
+//
+//        List<MerchantStore> storeList;
+//
+//        // Fetch all stores or filter by params
+//        if (storeCode == null && storeName == null && storeCreationDate == null) {
+//            storeList = merchantStoreRepo.findAll();
+//        } else {
+//            storeList = merchantStoreRepo.searchStores(storeCode, storeName, storeCreationDate);
+//        }
+//
+//        List<ReadAbleMerchantStore> readableStores = new ArrayList<>();
+//
+//        for (MerchantStore store : storeList) {
+//            if (store != null) {
+//                ReadAbleMerchantStore dto = new ReadAbleMerchantStore();
+//
+//                // ---- Direct Fields ----
+//                dto.setId(store.getId());
+//                dto.setStoreName(store.getStoreName());
+//                dto.setStoreCode(store.getStoreCode());
+//                dto.setDescription(store.getDescription());
+//                dto.setLogo(store.getLogo());
+//                dto.setLogoUrl(store.getLogoUrl());
+//                dto.setOwnerName(store.getOwnerName());
+//                dto.setOwnerEmail(store.getOwnerEmail());
+//                dto.setPhone(store.getPhone());
+//                dto.setCountry(store.getCountry());
+//                dto.setCity(store.getCity());
+//                dto.setAddress(store.getAddress());
+//                dto.setCreatedAt(store.getCreatedAt());
+//                dto.setUpdatedAt(store.getUpdatedAt());
+//                dto.setIsDelete(store.getIsDelete());
+//                dto.setActive(store.getIsActive());
+//
+//                // ---- Nested User ----
+//                if (store.getUser() != null) {
+//                    ReadAbleUser readAbleUser = new ReadAbleUser();
+//                    readAbleUser.setId(store.getUser().getId());
+//                    readAbleUser.setUserName(store.getUser().getUserName());
+//                    readAbleUser.setEmail(store.getUser().getEmail());
+//                    dto.setReadAbleUser(readAbleUser);
+//                }
+//
+//                // ---- Nested Addresses ----
+//                if (store.getAddresses() != null && !store.getAddresses().isEmpty()) {
+//                    List<ReadAbleStoreAddress> addressList = new ArrayList<>();
+//                    for (StoreAddress addr : store.getAddresses()) {
+//                        ReadAbleStoreAddress addressDto = new ReadAbleStoreAddress();
+//                        addressDto.setId(addr.getId());
+//                        addressDto.setAddress(addr.getAddress());
+//                        addressDto.setCity(addr.getCity());
+//                        addressDto.setCountry(addr.getCountry());
+//                        addressList.add(addressDto);
+//                    }
+//                    dto.setStoreAddresses(addressList);
+//                }
+//
+//                readableStores.add(dto);
+//            }
+//        }
+//
+//        return readableStores;
+//    }
+
     @Override
     public List<ReadAbleMerchantStore> getStores(
             String storeCode,
@@ -378,20 +453,24 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
 
         List<MerchantStore> storeList;
 
-        // Fetch all stores or filter by params
+        // ✅ Use Criteria Specification
         if (storeCode == null && storeName == null && storeCreationDate == null) {
             storeList = merchantStoreRepo.findAll();
         } else {
-            storeList = merchantStoreRepo.searchStores(storeCode, storeName, storeCreationDate);
+            Specification<MerchantStore> spec =
+                    merchantStoreSpecification.searchStores(
+                            storeCode, storeName, storeCreationDate);
+
+            storeList = merchantStoreRepo.findAll(spec);
         }
 
+        // ===== DTO Mapping (UNCHANGED) =====
         List<ReadAbleMerchantStore> readableStores = new ArrayList<>();
 
         for (MerchantStore store : storeList) {
             if (store != null) {
                 ReadAbleMerchantStore dto = new ReadAbleMerchantStore();
 
-                // ---- Direct Fields ----
                 dto.setId(store.getId());
                 dto.setStoreName(store.getStoreName());
                 dto.setStoreCode(store.getStoreCode());
@@ -409,27 +488,25 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
                 dto.setIsDelete(store.getIsDelete());
                 dto.setActive(store.getIsActive());
 
-                // ---- Nested User ----
                 if (store.getUser() != null) {
-                    ReadAbleUser readAbleUser = new ReadAbleUser();
-                    readAbleUser.setId(store.getUser().getId());
-                    readAbleUser.setUserName(store.getUser().getUserName());
-                    readAbleUser.setEmail(store.getUser().getEmail());
-                    dto.setReadAbleUser(readAbleUser);
+                    ReadAbleUser user = new ReadAbleUser();
+                    user.setId(store.getUser().getId());
+                    user.setUserName(store.getUser().getUserName());
+                    user.setEmail(store.getUser().getEmail());
+                    dto.setReadAbleUser(user);
                 }
 
-                // ---- Nested Addresses ----
-                if (store.getAddresses() != null && !store.getAddresses().isEmpty()) {
-                    List<ReadAbleStoreAddress> addressList = new ArrayList<>();
+                if (store.getAddresses() != null) {
+                    List<ReadAbleStoreAddress> addresses = new ArrayList<>();
                     for (StoreAddress addr : store.getAddresses()) {
-                        ReadAbleStoreAddress addressDto = new ReadAbleStoreAddress();
-                        addressDto.setId(addr.getId());
-                        addressDto.setAddress(addr.getAddress());
-                        addressDto.setCity(addr.getCity());
-                        addressDto.setCountry(addr.getCountry());
-                        addressList.add(addressDto);
+                        ReadAbleStoreAddress a = new ReadAbleStoreAddress();
+                        a.setId(addr.getId());
+                        a.setAddress(addr.getAddress());
+                        a.setCity(addr.getCity());
+                        a.setCountry(addr.getCountry());
+                        addresses.add(a);
                     }
-                    dto.setStoreAddresses(addressList);
+                    dto.setStoreAddresses(addresses);
                 }
 
                 readableStores.add(dto);
@@ -438,7 +515,6 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
 
         return readableStores;
     }
-
 
 }
 
