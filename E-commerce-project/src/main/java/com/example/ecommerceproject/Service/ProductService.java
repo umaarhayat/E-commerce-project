@@ -24,7 +24,6 @@ public interface ProductService {
     // Delete a product by ID
     void deleteProduct(Long id);
 
-
     // image crud operation
     String uploadProductImage(Long productId, MultipartFile file);
 
@@ -33,6 +32,13 @@ public interface ProductService {
     String deleteProductImage(Long productId);
 
     // categoryId getAllProduct
-
     List<ReadAbleProduct> getProductsByCategoryId(Long categoryId);
+
+
+    List<ReadAbleProduct> getProducts(String storeCode,
+                                      String storeName,
+                                      Long productId,
+                                      String productName,
+                                      String categoryName,
+                                      Long categoryId);
 }

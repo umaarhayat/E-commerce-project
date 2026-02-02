@@ -9,19 +9,18 @@ import java.util.Date;
 public class ProductDto {
 
     private Long id;
+    private  String productName;
     private String productImage;
     private String sku;
-
     private String refSku;
     private boolean available;
     private boolean isActive;
-
     private BigDecimal price;
     private int quantity;
     private Date dateAvailable;
-
     private String categoryId;
     private String merchantStoreId;
+
 
     // Getters & Setters
     // ... (generate all)
@@ -114,4 +113,16 @@ public class ProductDto {
     public void setProductImage(String productImage) {
         this.productImage = productImage;
     }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+
+
+
 }

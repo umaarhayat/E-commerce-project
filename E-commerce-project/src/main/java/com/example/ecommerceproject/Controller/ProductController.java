@@ -3,6 +3,7 @@ package com.example.ecommerceproject.Controller;
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.dto.GenericResponse;
+import com.example.ecommerceproject.dto.ReadAbleProduct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -10,6 +11,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/products")
@@ -26,7 +30,7 @@ public class ProductController {
         );
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public GenericResponse getAllProducts() {
         return GenericResponse.success(
                 productService.getAllProducts(),
@@ -102,4 +106,31 @@ public class ProductController {
         );
     }
 
+
+    /**
+     * GET /api/products
+     * Optional filters:
+     * storeCode, storeName, productId, productName, categoryId, categoryName
+     * If no filter is passed, returns all products
+     */
+    @GetMapping("/search")
+    public GenericResponse<List<ReadAbleProduct>> getProducts(
+            @RequestParam(required = false) String storeCode,
+            @RequestParam(required = false) String storeName,
+            @RequestParam(required = false) Long productId,
+            @RequestParam(required = false) String productName,
+            @RequestParam(required = false) String categoryName,
+            @RequestParam(required = false) Long categoryId
+    ) {
+        List<ReadAbleProduct> products = productService.getProducts(
+                storeCode, storeName, productId, productName, categoryName, categoryId
+        );
+
+        return GenericResponse.success(products, "Products fetched successfully");
+    }
 }
+
+
+
+
+
