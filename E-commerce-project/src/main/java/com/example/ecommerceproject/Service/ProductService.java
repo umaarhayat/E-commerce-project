@@ -24,7 +24,6 @@ public interface ProductService {
     // Delete a product by ID
     void deleteProduct(Long id);
 
-
     // image crud operation
     String uploadProductImage(Long productId, MultipartFile file);
 

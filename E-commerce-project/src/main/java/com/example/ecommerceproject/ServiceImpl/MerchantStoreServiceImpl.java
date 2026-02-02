@@ -7,6 +7,7 @@ import com.example.ecommerceproject.Exception.MerchantStoreNotFoundException;
 import com.example.ecommerceproject.Exception.RoleNotFoundException;
 import com.example.ecommerceproject.Exception.UserNotFoundException;
 import com.example.ecommerceproject.Repository.MerchantStoreRepo;
+import com.example.ecommerceproject.Repository.RoleRepo;
 import com.example.ecommerceproject.Repository.UserRepo;
 import com.example.ecommerceproject.Service.*;
 import com.example.ecommerceproject.converter.StoreConverter;
@@ -22,9 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class MerchantStoreServiceImpl implements MerchantStoreService {
@@ -35,6 +34,8 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
     private UserService userService;
     @Autowired
     private UserRepo userRepo;
+    @Autowired
+    private RoleRepo roleRepo;
     @Autowired
     private RoleService roleService;
     @Autowired
@@ -181,10 +182,12 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         if (request == null || request.getReadableMerchantStore() == null || request.getReadAbleUser() == null) {
             throw new MerchantStoreNotFoundException("Both user and store data are required");
         }
+
+        // Fetch store
         MerchantStore store = merchantStoreRepo.findById(id)
                 .orElseThrow(() -> new MerchantStoreNotFoundException("Store not found with id: " + id));
 
-        // Update Store
+        // ===== Update Store fields =====
         ReadAbleMerchantStore storeDto = request.getReadableMerchantStore();
         store.setStoreName(storeDto.getStoreName());
         store.setDescription(storeDto.getDescription());
@@ -196,18 +199,34 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         store.setCity(storeDto.getCity());
         store.setAddress(storeDto.getAddress());
 
-        // Update User
+        // ===== Update User fields =====
         ReadAbleUser userDto = request.getReadAbleUser();
         User user = store.getUser();
         if (user != null) {
             user.setUserName(userDto.getUserName());
             user.setEmail(userDto.getEmail());
+
+            // ===== Update Roles =====
+            if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+                Set<Role> updatedRoles = new HashSet<>();
+                for (RoleDto r : userDto.getRoles()) {
+                    Role role = roleRepo.findById(r.getId())
+                            .orElseThrow(() -> new RuntimeException("Role not found with id: " + r.getId()));
+                    updatedRoles.add(role);
+                }
+                user.setRoles((List<Role>) updatedRoles); // replace old roles with new ones
+            }
+
             userRepo.save(user);
         }
+
+        // Save store
         merchantStoreRepo.save(store);
 
+        // Return readable response
         return storeConverter.convertToReadable(user, modelMapper.map(store, MerchantStoreDto.class));
     }
+
 
     // ================= HARD DELETE =================
     @Override

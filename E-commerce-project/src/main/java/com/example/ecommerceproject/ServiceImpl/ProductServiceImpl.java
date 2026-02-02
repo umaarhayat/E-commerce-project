@@ -5,6 +5,7 @@ import com.example.ecommerceproject.Entity.MerchantStore;
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Entity.ProductDescription;
 import com.example.ecommerceproject.Exception.CategoryNotFoundException;
+import com.example.ecommerceproject.Exception.MerchantStoreNotFoundException;
 import com.example.ecommerceproject.Exception.ProductNOtFoundException;
 import com.example.ecommerceproject.Repository.CategoryRepo;
 import com.example.ecommerceproject.Repository.MerchantStoreRepo;
@@ -90,8 +91,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ReadAbleProduct updateProduct(Long id, Product productDetails) {
+
         Product existing = productRepo.findById(id)
-                .orElseThrow(() -> new ProductNOtFoundException("Product not found with ID: " + id));
+                .orElseThrow(() -> new ProductNOtFoundException(
+                        "Product not found with ID: " + id));
 
         existing.setProductImage(productDetails.getProductImage());
         existing.setSku(productDetails.getSku());
@@ -101,17 +104,49 @@ public class ProductServiceImpl implements ProductService {
         existing.setPrice(productDetails.getPrice());
         existing.setQuantity(productDetails.getQuantity());
         existing.setDateAvailable(productDetails.getDateAvailable());
-        existing.setCategory(productDetails.getCategory());
-        existing.setMerchantStore(productDetails.getMerchantStore());
 
-        // ===== Update descriptions if provided =====
-        if (productDetails.getProductDescriptions() != null) {
-            existing.setProductDescriptions(productDetails.getProductDescriptions());
+        // ✅ CATEGORY UPDATE
+        if (productDetails.getCategory() != null &&
+                productDetails.getCategory().getId() != null) {
+
+            Category category = categoryRepo.findById(
+                    productDetails.getCategory().getId()
+            ).orElseThrow(() -> new CategoryNotFoundException("Category not found"));
+
+            existing.setCategory(category);
         }
+
+        // ✅ MERCHANT STORE UPDATE
+        if (productDetails.getMerchantStore() != null && productDetails.getMerchantStore().getId() != null) {
+            MerchantStore store = merchantStoreRepo.findById(
+                    productDetails.getMerchantStore().getId()
+            ).orElseThrow(() -> new MerchantStoreNotFoundException("Merchant store not found"));
+
+            existing.setMerchantStore(store);
+        }
+
+        // ✅ DESCRIPTIONS
+        if (productDetails.getProductDescriptions() != null) {
+
+            // ensure list is initialized
+            if (existing.getProductDescriptions() == null) {
+                existing.setProductDescriptions(new ArrayList<>());
+            }
+            // purani descriptions remove
+            existing.getProductDescriptions().clear();
+
+            // nayi descriptions add
+            for (ProductDescription desc : productDetails.getProductDescriptions()) {
+                desc.setProduct(existing);   // 🔑 VERY IMPORTANT
+                existing.getProductDescriptions().add(desc);
+            }
+        }
+
 
         Product updated = productRepo.save(existing);
         return storeConverter.convertToReadable(updated);
     }
+
 
     @Override
     public void deleteProduct(Long id) {
