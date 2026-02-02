@@ -2,6 +2,7 @@ package com.example.ecommerceproject.dto;
 
 public class CategoryDto {
     private Long id;
+    private String categoryName;
     private String code;
     private String categoryImage;
     private Integer sortOrder;
@@ -90,5 +91,13 @@ public class CategoryDto {
 
     public void setActive(boolean active) {
         isActive = active;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }
