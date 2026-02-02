@@ -8,6 +8,7 @@ public class ReadAbleProduct {
 
     private Long id;
 
+    private  String productName;
     private String productImage;
     private String sku;
     private String refSku;
@@ -18,10 +19,13 @@ public class ReadAbleProduct {
     private Date dateAvailable;
     private Date createdAt;
     private Date updatedAt;
-
     // Only IDs
     private Long categoryId;
+    private String categoryName;
     private Long merchantStoreId;
+    private String storeCode;
+    private String storeName;
+
 
 
     private List<ReadAbleProductDescription> productDescriptions;
@@ -78,5 +82,37 @@ public class ReadAbleProduct {
 
     public void setProductDescriptions(List<ReadAbleProductDescription> productDescriptions) {
         this.productDescriptions = productDescriptions;
+    }
+
+    public String getStoreCode() {
+        return storeCode;
+    }
+
+    public void setStoreCode(String storeCode) {
+        this.storeCode = storeCode;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
+    public String getStoreName() {
+        return storeName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
     }
 }

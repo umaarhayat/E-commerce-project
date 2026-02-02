@@ -1,5 +1,7 @@
 package com.example.ecommerceproject.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
@@ -12,7 +14,8 @@ public class Product {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "productName")
+    private  String productName;
     @Column(name = "product_image")
     private String productImage;
     @Column(name = "sku", nullable = false)
@@ -108,5 +111,13 @@ public class Product {
 
     public void setProductDescriptions(List<ProductDescription> productDescriptions) {
         this.productDescriptions = productDescriptions;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 }

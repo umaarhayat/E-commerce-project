@@ -86,6 +86,7 @@ public class StoreConverter {
 
         ReadAbleProduct dto = new ReadAbleProduct();
         dto.setId(product.getId());
+        dto.setProductName(product.getProductName());
         dto.setProductImage(product.getProductImage());
         dto.setSku(product.getSku());
         dto.setRefSku(product.getRefSku());
@@ -130,6 +131,7 @@ public class StoreConverter {
 
         // ================= Category basic fields =================
         dto.setId(category.getId());
+        dto.setCategoryName(category.getCategoryName());
         dto.setCode(category.getCode());
         dto.setCategoryImage(category.getCategoryImage());
         dto.setSortOrder(category.getSortOrder());
@@ -161,6 +163,47 @@ public class StoreConverter {
         return dto;
     }
 
+
+    // ================= Convert Customer to ReadAbleCustomer =================
+    public ReadAbleCustomer convertToReadable(Customer customer) {
+        if (customer == null) return null;
+
+        ReadAbleCustomer dto = new ReadAbleCustomer();
+
+        // ================= Customer basic fields =================
+        dto.setId(customer.getId());
+        dto.setCompanyName(customer.getCompanyName());
+        dto.setCompanyTaxNumber(customer.getCompanyTaxNumber());
+        dto.setCompanyWebsite(customer.getCompanyWebsite());
+        dto.setBusinessType(customer.getBusinessType() != null
+                ? customer.getBusinessType().name() : null);
+        dto.setCustomerType(customer.getCustomerType() != null
+                ? customer.getCustomerType().name() : null);
+
+        // ================= Contact Details =================
+        if (customer.getContactDetails() != null && !customer.getContactDetails().isEmpty()) {
+
+            List<ReadAbleContactDetail> readableContacts = new ArrayList<>();
+
+            for (ContactDetail contact : customer.getContactDetails()) {
+                ReadAbleContactDetail r = new ReadAbleContactDetail();
+                r.setAuthorizedPersonName(contact.getAuthorizedPersonName());
+                r.setDesignation(contact.getDesignation());
+                r.setPrimaryMobileNumber(contact.getPrimaryMobileNumber());
+                r.setPrimaryBusinessEmail(contact.getPrimaryBusinessEmail());
+
+                readableContacts.add(r);
+            }
+
+            dto.setContactDetails(readableContacts);
+        } else {
+            dto.setContactDetails(new ArrayList<>()); // empty list instead of null
+        }
+
+        return dto;
+    }
 }
+
+
 
 
