@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -76,10 +78,27 @@ public class UserServiceImpl implements UserService {
     public UserDto updateByUser(Long id, UserDto userDto) {
         User existingUser = userRepo.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("User not found with id: " + id));
+
+        // basic fields
         existingUser.setUserName(userDto.getUserName());
         existingUser.setEmail(userDto.getEmail());
+
+        // ✅ roles update
+        if (userDto.getRoles() != null && !userDto.getRoles().isEmpty()) {
+            Set<Role> updatedRoles = new HashSet<>();
+
+            for (RoleDto r : userDto.getRoles()) {
+                Role role = roleRepo.findById(r.getId())
+                        .orElseThrow(() -> new RuntimeException("Role not found with id: " + r.getId()));
+                updatedRoles.add(role);
+            }
+
+            existingUser.setRoles((List<Role>) updatedRoles);  // replace old roles with new ones
+        }
+
         return readUser(userRepo.save(existingUser));
     }
+
 
     @Override
     public List<UserDto> getAllUsers() {

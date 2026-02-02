@@ -7,6 +7,7 @@ public class ReadAbleCategory {
 
 
     private Long id;
+    private String categoryName;
     private String code;
     private String categoryImage;
     private Integer sortOrder;
@@ -113,5 +114,13 @@ public class ReadAbleCategory {
 
     public void setCategoryDescriptions(List<ReadAbleCategoryDescription> categoryDescriptions) {
         this.categoryDescriptions = categoryDescriptions;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
     }
 }

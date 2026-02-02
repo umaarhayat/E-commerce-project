@@ -150,10 +150,7 @@ public class MerchantStoreController {
         List<ReadAbleMerchantStore> stores =
                 merchantStoreService.getStores(storeCode, storeName, storeCreationDate);
 
-        return GenericResponse.success(
-                stores,
-                "Stores fetched successfully"
-        );
+        return GenericResponse.success(stores, "Stores fetched successfully");
     }
 
 
