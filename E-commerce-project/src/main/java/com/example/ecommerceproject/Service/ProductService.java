@@ -1,6 +1,7 @@
 package com.example.ecommerceproject.Service;
 
 import com.example.ecommerceproject.Entity.Product;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleProduct;
 import org.springframework.core.io.Resource;
 import org.springframework.web.multipart.MultipartFile;
@@ -13,7 +14,7 @@ public interface ProductService {
     ReadAbleProduct createProduct(Product product);
 
     // Get all products
-    List<ReadAbleProduct> getAllProducts();
+//    PageResponse<ReadAbleProduct> getAllProducts(int page, int size);
 
     // Get a product by ID
     ReadAbleProduct getProductById(Long id);
@@ -33,12 +34,14 @@ public interface ProductService {
 
     // categoryId getAllProduct
     List<ReadAbleProduct> getProductsByCategoryId(Long categoryId);
-
-
-    List<ReadAbleProduct> getProducts(String storeCode,
-                                      String storeName,
-                                      Long productId,
-                                      String productName,
-                                      String categoryName,
-                                      Long categoryId);
+    PageResponse<ReadAbleProduct> getProducts(
+            String storeCode,
+            String storeName,
+            Long productId,
+            String productName,
+            String categoryName,
+            Long categoryId,
+            int pageNumber,
+            int pageSize
+    );
 }
