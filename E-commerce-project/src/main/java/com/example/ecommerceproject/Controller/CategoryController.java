@@ -4,8 +4,10 @@ import com.example.ecommerceproject.Entity.Category;
 import com.example.ecommerceproject.Service.CategoryService;
 import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.dto.GenericResponse;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleCategory;
 import com.example.ecommerceproject.dto.ReadAbleProduct;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -38,13 +40,14 @@ public class CategoryController {
 
     // ========== Get All Categories ==========
     @GetMapping
-    public GenericResponse getAllCategories() {
-        return GenericResponse.success(
-                categoryService.getAllCategories(),
-                "Categories fetched successfully"
-        );
+    @Operation(summary = "Get all categories (paginated)", description = "Fetch all categories with pagination")
+    public GenericResponse<PageResponse<ReadAbleCategory>> getAllCategories(
+            @RequestParam(defaultValue = "1") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize
+    ) {
+        PageResponse<ReadAbleCategory> response = categoryService.getAllCategories(pageNumber, pageSize);
+        return GenericResponse.success(response, "Categories fetched successfully");
     }
-
     // ========== Get Category By ID ==========
     @GetMapping("/{id}")
     public GenericResponse getCategoryById(@PathVariable Long id) {

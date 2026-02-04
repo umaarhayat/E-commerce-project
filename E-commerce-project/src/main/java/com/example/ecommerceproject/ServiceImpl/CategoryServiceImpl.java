@@ -6,10 +6,14 @@ import com.example.ecommerceproject.Repository.CategoryRepo;
 import com.example.ecommerceproject.Service.CategoryService;
 import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.converter.StoreConverter;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleCategory;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -49,20 +53,35 @@ public class CategoryServiceImpl implements CategoryService {
 
     // ================= GET ALL CATEGORIES =================
     @Override
-    public List<ReadAbleCategory> getAllCategories() {
-        List<Category> categories = categoryRepo.findAll();
+    public PageResponse<ReadAbleCategory> getAllCategories(int pageNumber, int pageSize) {
+        // Pageable create karo (Spring Data JPA)
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+
+        // Paginated query
+        Page<Category> categories = categoryRepo.findAll(pageable);
 
         if (categories.isEmpty()) {
             throw new CategoryNotFoundException("No categories found");
         }
 
-        List<ReadAbleCategory> list = new ArrayList<>();
-        for (Category c : categories) {
-            list.add(storeConverter.convertToReadable(c));
+        // Entity -> ReadAble DTO conversion
+        List<ReadAbleCategory> dtoList = new ArrayList<>();
+        for (Category c : categories.getContent()) {
+            ReadAbleCategory dto = storeConverter.convertToReadable(c);
+            dtoList.add(dto);
         }
 
-        return list;
+        // PageResponse create karo
+        PageResponse<ReadAbleCategory> response = new PageResponse<>();
+        response.setContent(dtoList);
+        response.setPage(pageNumber);
+        response.setSize(pageSize);
+        response.setTotalPages(categories.getTotalPages());
+        response.setTotalElements(categories.getTotalElements());
+
+        return response;
     }
+
 
     // ================= GET CATEGORY BY ID =================
     @Override

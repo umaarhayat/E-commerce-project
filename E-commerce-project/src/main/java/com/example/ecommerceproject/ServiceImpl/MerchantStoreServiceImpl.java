@@ -19,6 +19,10 @@ import com.example.ecommerceproject.specification.MerchantStoreSpecification;
 import org.springframework.core.io.Resource;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -140,47 +144,75 @@ public class MerchantStoreServiceImpl implements MerchantStoreService {
         return storeConverter.convertToReadable(user, storeDto);
     }
     // ================= GET ALL =================
-    @Override
-    public List<ReadableMerchantStore> getAllMerchantStore() {
-        List<MerchantStore> stores = merchantStoreRepo.findAll();
-        if (stores.isEmpty()) throw new MerchantStoreNotFoundException("No merchant stores found");
+//    @Override
+//    public PageResponse<ReadableMerchantStore> getAllMerchantStore(
+//            int page,
+//            int size
+//    ) {
+//        // Pageable object
+//        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
+//
+//        // Specification for filtering soft-deleted stores and inactive users
+//        Specification<MerchantStore> spec = (root, query, cb) -> {
+//            // store.isDelete = false OR null
+//            var storePredicate = cb.or(
+//                    cb.isNull(root.get("isDelete")),
+//                    cb.isFalse(root.get("isDelete"))
+//            );
+//
+//            // join with user
+//            var userJoin = root.join("user"); // assumes "user" field in MerchantStore
+//            var userPredicate = cb.or(
+//                    cb.isNull(userJoin.get("active")),
+//                    cb.isTrue(userJoin.get("active"))
+//            );
+//
+//            return cb.and(storePredicate, userPredicate);
+//        };
+//
+//        // Fetch paginated and filtered stores
+//        Page<MerchantStore> storePage = merchantStoreRepo.findAll(spec, pageable);
+//
+//        if (storePage.isEmpty()) {
+//            throw new MerchantStoreNotFoundException("No active merchant stores found");
+//        }
+//
+//        // Convert entities to DTOs
+//        List<ReadableMerchantStore> dtoList = new ArrayList<>();
+//        for (MerchantStore store : storePage.getContent()) {
+//            User user = store.getUser();
+//            MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
+//            dtoList.add(storeConverter.convertToReadable(user, storeDto));
+//        }
+//
+//        // Build PageResponse
+//        PageResponse<ReadableMerchantStore> response = new PageResponse<>();
+//        response.setContent(dtoList);
+//        response.setPage(storePage.getNumber() + 1);
+//        response.setSize(storePage.getSize());
+//        response.setTotalPages(storePage.getTotalPages());
+//        response.setTotalElements(storePage.getTotalElements());
+//
+//        return response;
+//    }
 
-        List<ReadableMerchantStore> result = new ArrayList<>();
-        for (MerchantStore store : stores) {
-            // Skip if store is soft-deleted
-            if (store.getIsDelete() != null && store.getIsDelete()) {
-                continue;
-            }
-            User user = store.getUser();
-            // Skip if user is null or user is soft-deleted (assuming User has isDelete or isActive field)
-            if (user == null || (user.getActive() != null && !user.getActive())) {
-                continue;
-            }
-            MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
-            result.add(storeConverter.convertToReadable(user, storeDto));
-        }
-        if (result.isEmpty()) throw new MerchantStoreNotFoundException("No active merchant stores found");
-        return result;
-    }
     // ================= GET BY ID =================
     @Override
     public ReadableMerchantStore getById(Long id) {
         MerchantStore store = merchantStoreRepo.findById(id)
                 .orElseThrow(() -> new MerchantStoreNotFoundException("Store not found with id: " + id));
 
-        // Safe null check for soft delete
         if (Boolean.TRUE.equals(store.getIsDelete())) {
-            throw new MerchantStoreNotFoundException("Store not found with id: " + id);
-        }
-        User user = store.getUser();
-        // Optional: skip if user is inactive/soft-deleted
-        if (user == null || Boolean.FALSE.equals(user.getActive())) {
-            throw new MerchantStoreNotFoundException("Store not found with id: " + id);
+            throw new MerchantStoreNotFoundException("Store not found with id: " + id + " (store is deleted)");
         }
 
+        User user = store.getUser();
         MerchantStoreDto storeDto = modelMapper.map(store, MerchantStoreDto.class);
+
+        // Agar user missing/inactive hai, null pass kar sakte ho
         return storeConverter.convertToReadable(user, storeDto);
     }
+
 
     // ================= UPDATE =================
     @Override
@@ -446,74 +478,100 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
 //    }
 
     @Override
-    public List<ReadAbleMerchantStore> getStores(
+    public PageResponse<ReadAbleMerchantStore> getStores(
             String storeCode,
             String storeName,
-            LocalDate storeCreationDate) {
+            LocalDate storeCreationDate,
+            int page,
+            int size
+    ) {
+        Pageable pageable = PageRequest.of(page - 1, size, Sort.by("id").descending());
 
-        List<MerchantStore> storeList;
+        Page<MerchantStore> storePage;
 
-        // ✅ Use Criteria Specification
         if (storeCode == null && storeName == null && storeCreationDate == null) {
-            storeList = merchantStoreRepo.findAll();
+            storePage = merchantStoreRepo.findAll(pageable);
         } else {
             Specification<MerchantStore> spec =
-                    merchantStoreSpecification.searchStores(
-                            storeCode, storeName, storeCreationDate);
-
-            storeList = merchantStoreRepo.findAll(spec);
+                    merchantStoreSpecification.searchStores(storeCode, storeName, storeCreationDate);
+            storePage = merchantStoreRepo.findAll(spec, pageable);
         }
 
-        // ===== DTO Mapping (UNCHANGED) =====
-        List<ReadAbleMerchantStore> readableStores = new ArrayList<>();
+        List<ReadAbleMerchantStore> dtoList = storePage.getContent().stream().map(store -> {
 
-        for (MerchantStore store : storeList) {
-            if (store != null) {
-                ReadAbleMerchantStore dto = new ReadAbleMerchantStore();
+            ReadAbleMerchantStore dto = new ReadAbleMerchantStore();
 
-                dto.setId(store.getId());
-                dto.setStoreName(store.getStoreName());
-                dto.setStoreCode(store.getStoreCode());
-                dto.setDescription(store.getDescription());
-                dto.setLogo(store.getLogo());
-                dto.setLogoUrl(store.getLogoUrl());
-                dto.setOwnerName(store.getOwnerName());
-                dto.setOwnerEmail(store.getOwnerEmail());
-                dto.setPhone(store.getPhone());
-                dto.setCountry(store.getCountry());
-                dto.setCity(store.getCity());
-                dto.setAddress(store.getAddress());
-                dto.setCreatedAt(store.getCreatedAt());
-                dto.setUpdatedAt(store.getUpdatedAt());
-                dto.setIsDelete(store.getIsDelete());
-                dto.setActive(store.getIsActive());
+            // -------- Store Fields --------
+            dto.setId(store.getId());
+            dto.setStoreName(store.getStoreName());
+            dto.setStoreCode(store.getStoreCode());
+            dto.setDescription(store.getDescription());
+            dto.setLogo(store.getLogo());
+            dto.setLogoUrl(store.getLogoUrl());
+            dto.setOwnerName(store.getOwnerName());
+            dto.setOwnerEmail(store.getOwnerEmail());
+            dto.setPhone(store.getPhone());
+            dto.setCountry(store.getCountry());
+            dto.setCity(store.getCity());
+            dto.setAddress(store.getAddress());
+            dto.setCreatedAt(store.getCreatedAt());
+            dto.setUpdatedAt(store.getUpdatedAt());
+            dto.setIsDelete(store.getIsDelete());
+            dto.setActive(store.getIsActive());
 
-                if (store.getUser() != null) {
-                    ReadAbleUser user = new ReadAbleUser();
-                    user.setId(store.getUser().getId());
-                    user.setUserName(store.getUser().getUserName());
-                    user.setEmail(store.getUser().getEmail());
-                    dto.setReadAbleUser(user);
-                }
+            // -------- User Mapping (FIXED) --------
+            if (store.getUser() != null) {
+                User u = store.getUser();
 
-                if (store.getAddresses() != null) {
-                    List<ReadAbleStoreAddress> addresses = new ArrayList<>();
-                    for (StoreAddress addr : store.getAddresses()) {
-                        ReadAbleStoreAddress a = new ReadAbleStoreAddress();
-                        a.setId(addr.getId());
-                        a.setAddress(addr.getAddress());
-                        a.setCity(addr.getCity());
-                        a.setCountry(addr.getCountry());
-                        addresses.add(a);
+                ReadAbleUser readUser = new ReadAbleUser();
+                readUser.setId(u.getId());
+                readUser.setUserName(u.getUserName());
+                readUser.setEmail(u.getEmail());
+                readUser.setActive(u.getActive());
+
+                // ---- ROLES (MAIN FIX) ----
+                List<RoleDto> roleDtos = new ArrayList<>();
+                if (u.getRoles() != null && !u.getRoles().isEmpty()) {
+                    for (Role role : u.getRoles()) {
+                        RoleDto r = new RoleDto();
+                        r.setId(role.getId());
+                        r.setRoleName(role.getRoleName());
+                        roleDtos.add(r);
                     }
-                    dto.setStoreAddresses(addresses);
                 }
+                readUser.setRoles(roleDtos);
 
-                readableStores.add(dto);
+                dto.setReadAbleUser(readUser);
             }
-        }
 
-        return readableStores;
+            // -------- Store Addresses --------
+            if (store.getAddresses() != null && !store.getAddresses().isEmpty()) {
+                List<ReadAbleStoreAddress> addresses = new ArrayList<>();
+                for (StoreAddress addr : store.getAddresses()) {
+                    ReadAbleStoreAddress a = new ReadAbleStoreAddress();
+                    a.setId(addr.getId());
+                    a.setAddress(addr.getAddress());
+                    a.setCity(addr.getCity());
+                    a.setCountry(addr.getCountry());
+                    a.setPostalCode(addr.getPostalCode());
+                    addresses.add(a);
+                }
+                dto.setStoreAddresses(addresses);
+            }
+
+            return dto;
+
+        }).toList();
+
+        // -------- Page Response --------
+        PageResponse<ReadAbleMerchantStore> response = new PageResponse<>();
+        response.setContent(dtoList);
+        response.setPage(storePage.getNumber() + 1);
+        response.setSize(storePage.getSize());
+        response.setTotalPages(storePage.getTotalPages());
+        response.setTotalElements(storePage.getTotalElements());
+
+        return response;
     }
 
 }

@@ -1,6 +1,7 @@
 package com.example.ecommerceproject.Service;
 
 import com.example.ecommerceproject.Entity.Category;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleCategory;
 import com.example.ecommerceproject.dto.ReadAbleCategoryDescription;
 import org.springframework.core.io.Resource;
@@ -12,7 +13,8 @@ public interface CategoryService {
 
     ReadAbleCategory createCategory(Category category);
 
-    List<ReadAbleCategory> getAllCategories();
+    // ================= GET ALL CATEGORIES =================
+    PageResponse<ReadAbleCategory> getAllCategories(int pageNumber, int pageSize);
 
     ReadAbleCategory getCategoryById(Long id);
 

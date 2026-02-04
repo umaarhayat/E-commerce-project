@@ -3,7 +3,9 @@ package com.example.ecommerceproject.Controller;
 import com.example.ecommerceproject.Entity.Role;
 import com.example.ecommerceproject.Service.RoleService;
 import com.example.ecommerceproject.Service.UserService;
+import com.example.ecommerceproject.dto.GenericResponse;
 import com.example.ecommerceproject.dto.RoleDto;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ public class RoleController {
     private RoleService roleService;
     @Autowired
     private UserService userService;
+
 
     // Create role
     @PostMapping
@@ -56,6 +59,22 @@ public class RoleController {
         return ResponseEntity.ok("Role deleted successfully");
     }
 
+
+    @PostMapping("/{userId}/assign-role/{roleId}")
+    @Operation(
+            summary = "Assign role to user",
+            description = "Assigns a specific role to a user using userId and roleId"
+    )
+    public GenericResponse<String> assignRoleToUser(
+            @PathVariable Long userId,
+            @PathVariable Long roleId
+    ) {
+        roleService.assignRoleToUser(userId, roleId);
+        return GenericResponse.success(
+                null,
+                "Role assigned successfully to user"
+        );
+    }
     // Assign role to user
     // ✅ Assign Permissions to Role
     @PutMapping("/{roleId}/permissions")

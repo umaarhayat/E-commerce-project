@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -17,8 +18,7 @@ public class ReadAbleUser {
     private String email;
     private Boolean isActive = Boolean.FALSE; // primitive boolean se Boolean me convert karo
 
-
-    private List<RoleDto> roles;
+    private List<RoleDto> roles = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -59,4 +59,7 @@ public class ReadAbleUser {
     public void setActive(Boolean active) {
         isActive = active;
     }
+
+
+
 }
