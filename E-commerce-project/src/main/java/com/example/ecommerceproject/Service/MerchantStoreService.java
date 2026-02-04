@@ -1,5 +1,6 @@
 package com.example.ecommerceproject.Service;
 
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleMerchantStore;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
@@ -15,7 +16,12 @@ public interface MerchantStoreService {
     ReadableMerchantStore createMerchantStore(PersistableMerchanStore persistableMerchantStore);
 
     // Get all MerchantStores
-    List<ReadableMerchantStore> getAllMerchantStore();
+
+    // ================= GET ALL =================
+//    PageResponse<ReadableMerchantStore> getAllMerchantStore(
+//            int page,
+//            int size
+//    );
 
     // Get a single MerchantStore by ID
     ReadableMerchantStore getById(Long id);
@@ -34,8 +40,11 @@ public interface MerchantStoreService {
     Resource downloadStoreLogo(Long storeId);
     String deleteStoreLogo(Long storeId);
 
-    List<ReadAbleMerchantStore> getStores(String storeCode,
-                                          String storeName,
-                                          LocalDate storeCreationDate);
-
+    PageResponse<ReadAbleMerchantStore> getStores(
+            String storeCode,
+            String storeName,
+            LocalDate storeCreationDate,
+            int page,
+            int size
+    );
 }

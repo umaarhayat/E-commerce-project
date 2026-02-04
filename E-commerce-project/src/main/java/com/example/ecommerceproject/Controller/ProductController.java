@@ -3,6 +3,7 @@ package com.example.ecommerceproject.Controller;
 import com.example.ecommerceproject.Entity.Product;
 import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.dto.GenericResponse;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleProduct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -30,13 +31,17 @@ public class ProductController {
         );
     }
 
-    @GetMapping("/all")
-    public GenericResponse getAllProducts() {
-        return GenericResponse.success(
-                productService.getAllProducts(),
-                "Products fetched successfully"
-        );
-    }
+    // Get all products with pagination
+//    @GetMapping("/all")
+//    public GenericResponse<PageResponse<ReadAbleProduct>> getAllProducts(
+//            @RequestParam(defaultValue = "1") int page,
+//            @RequestParam(defaultValue = "10") int size
+//    ) {
+//        PageResponse<ReadAbleProduct> productsPage = productService.getAllProducts(page, size);
+//
+//        return GenericResponse.success(productsPage, "Products fetched successfully");
+//    }
+
 
     @GetMapping("/{id}")
     public GenericResponse getProductById(@PathVariable Long id) {
@@ -114,21 +119,28 @@ public class ProductController {
      * If no filter is passed, returns all products
      */
     @GetMapping("/search")
-    public GenericResponse<List<ReadAbleProduct>> getProducts(
+    public GenericResponse<PageResponse<ReadAbleProduct>> getProducts(
             @RequestParam(required = false) String storeCode,
             @RequestParam(required = false) String storeName,
             @RequestParam(required = false) Long productId,
             @RequestParam(required = false) String productName,
             @RequestParam(required = false) String categoryName,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "1") int pageNumber,
+            @RequestParam(defaultValue = "10") int pageSize
     ) {
-        List<ReadAbleProduct> products = productService.getProducts(
-                storeCode, storeName, productId, productName, categoryName, categoryId
+        // Call service for paginated & filtered products
+        PageResponse<ReadAbleProduct> productsPage = productService.getProducts(
+                storeCode, storeName, productId, productName, categoryName, categoryId, pageNumber, pageSize
         );
 
-        return GenericResponse.success(products, "Products fetched successfully");
+        // Return PageResponse wrapped in GenericResponse
+        return GenericResponse.success(productsPage, "Products fetched successfully");
     }
+
+
 }
+
 
 
 

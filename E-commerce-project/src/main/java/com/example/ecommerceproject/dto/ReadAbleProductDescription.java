@@ -1,5 +1,7 @@
 package com.example.ecommerceproject.dto;
 
+import com.example.ecommerceproject.Entity.Product;
+
 import java.util.Date;
 
 public class ReadAbleProductDescription {
@@ -12,6 +14,8 @@ public class ReadAbleProductDescription {
     private Date createdAt;
     private Date updatedAt;
 
+
+    private Product product;
     // Getters & Setters
     // ...
 
@@ -70,5 +74,13 @@ public class ReadAbleProductDescription {
 
     public void setUpdatedAt(Date updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public Product getProduct() {
+        return product;
+    }
+
+    public void setProduct(Product product) {
+        this.product = product;
     }
 }
