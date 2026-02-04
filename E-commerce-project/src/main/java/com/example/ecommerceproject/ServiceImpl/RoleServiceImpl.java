@@ -44,10 +44,27 @@ public class RoleServiceImpl implements RoleService {
     public List<RoleDto> getAllRole() {
         List<Role> roles = roleRepo.findAll();
         if (roles.isEmpty()) throw new RoleNotFoundException("No roles found in database");
+
         List<RoleDto> roleDtos = new ArrayList<>();
         for (Role role : roles) {
-            roleDtos.add(modelMapper.map(role, RoleDto.class));
+            RoleDto dto = new RoleDto();
+            dto.setId(role.getId());
+            dto.setRoleName(role.getRoleName());
+
+            // Map permissions manually
+            if (role.getPermissions() != null && !role.getPermissions().isEmpty()) {
+                Set<Long> permIds = new HashSet<>();
+                for (Permission p : role.getPermissions()) {
+                    permIds.add(p.getId());
+                }
+                dto.setPermissionIds(permIds);
+            } else {
+                dto.setPermissionIds(new HashSet<>());
+            }
+
+            roleDtos.add(dto);
         }
+
         return roleDtos;
     }
 
