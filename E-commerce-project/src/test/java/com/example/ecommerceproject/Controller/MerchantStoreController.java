@@ -3,11 +3,15 @@ package com.example.ecommerceproject.Controller;
 import com.example.ecommerceproject.Service.MerchantStoreService;
 import com.example.ecommerceproject.Service.UserService;
 import com.example.ecommerceproject.dto.GenericResponse;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleMerchantStore;
 import com.example.ecommerceproject.persistable.PersistableMerchanStore;
 import com.example.ecommerceproject.readable.ReadableMerchantStore;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.core.io.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -19,6 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
+@Tag(name = "Merchant Store API", description = "Endpoints for managing merchant stores")
 @RequestMapping("api/merchantStore")
 public class MerchantStoreController {
 
@@ -30,19 +35,35 @@ public class MerchantStoreController {
 
     // ================= CREATE =================
     @PostMapping
+    @Operation(summary = "Create a new merchant store",
+            description = "Creates a new merchant store and sends email notification")
     public GenericResponse createMerchantStore(@RequestBody PersistableMerchanStore persistable) {
         ReadableMerchantStore store = merchantStoreService.createMerchantStore(persistable);
         return GenericResponse.success(store, "Store created successfully and email sent");
     }
     // ================= GET ALL =================
-    @GetMapping("/all")
-    public GenericResponse<List<ReadableMerchantStore>> getAllStores() {
-        List<ReadableMerchantStore> stores = merchantStoreService.getAllMerchantStore();
-        return GenericResponse.success(stores, "All Merchant Stores retrieved successfully");
-    }
+//    /**
+//     * Get paginated list of active merchant stores
+//     *
+//     * @param page page number (default 1)
+//     * @param size page size (default 10)
+//     * @return paginated list of ReadableMerchantStore
+//     */
+////    @GetMapping
+//    public GenericResponse<PageResponse<ReadableMerchantStore>> getAllStores(
+//            @RequestParam(defaultValue = "1") int page,
+//            @RequestParam(defaultValue = "10") int size
+//    ) {
+//        PageResponse<ReadableMerchantStore> storesPage =
+//                merchantStoreService.getAllMerchantStore(page, size);
+//
+//        return GenericResponse.success(storesPage, "Stores fetched successfully");
+//    }
+
 
     // ================= GET BY ID =================
     @GetMapping("/{id}")
+    @Operation(summary = "Get merchant store by ID", description = "Fetch a merchant store using its ID")
     public GenericResponse<ReadableMerchantStore> getStoreById(@PathVariable Long id) {
         ReadableMerchantStore store = merchantStoreService.getById(id);
         return GenericResponse.success(store, "Merchant Store retrieved successfully");
@@ -50,6 +71,7 @@ public class MerchantStoreController {
 
     // ================= UPDATE =================
     @PutMapping("/{id}")
+    @Operation(summary = "Update merchant store", description = "Update an existing merchant store by ID")
     public GenericResponse<ReadableMerchantStore> updateStore(
             @PathVariable Long id,
             @RequestBody ReadableMerchantStore request) {
@@ -63,12 +85,14 @@ public class MerchantStoreController {
      * @return success message after soft deletion
      */
     @PutMapping("/soft-delete/{id}")
+    @Operation(summary = "Soft delete merchant store", description = "Soft deletes a merchant store by ID")
     public GenericResponse<String> softDeleteMerchantStore(@PathVariable Long id) {
         String message = merchantStoreService.softDeleteMerchantStore(id);
         return GenericResponse.success(message, "Merchant Store soft-deleted successfully");
     }
 
     @PatchMapping("/{storeId}/user/status")
+    @Operation(summary = "Activate/Deactivate store user", description = "Update active status of the user associated with the store")
     public GenericResponse<String> activateUserOfStore(
             @PathVariable Long storeId,
             @RequestParam boolean isActive) {
@@ -78,6 +102,7 @@ public class MerchantStoreController {
 
     // ================= ACTIVATE / DEACTIVATE STORE =================
     @PatchMapping("/stores/{id}/status")
+    @Operation(summary = "Activate/Deactivate store", description = "Update active status of the merchant store")
     public GenericResponse<String> updateStoreStatus(
             @PathVariable Long id,
             @RequestParam boolean isActive) {
@@ -87,6 +112,7 @@ public class MerchantStoreController {
 
     // ================= GET STORE BY STORE CODE =================
     @GetMapping("/code/{storeCode}")
+    @Operation(summary = "Get store by store code", description = "Fetch a merchant store by its unique store code")
     public GenericResponse<ReadableMerchantStore> getStoreByStoreCode(@PathVariable String storeCode) {
         ReadableMerchantStore store = merchantStoreService.getMerchantStoreByStoreCode(storeCode);
         return GenericResponse.success(store, "Merchant Store retrieved successfully by store code");
@@ -95,6 +121,7 @@ public class MerchantStoreController {
     // ================= POST UPLOADING LOGO =================
     @PostMapping(value = "/{storeId}/upload-logo",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload store logo", description = "Upload a logo image file for the merchant store")
     public GenericResponse uploadLogo(
             @RequestParam(value = "logo", required = false) MultipartFile logo,
             @PathVariable long storeId
@@ -112,6 +139,7 @@ public class MerchantStoreController {
 
 
     @GetMapping("/{storeId}/download-logo")
+    @Operation(summary = "Download store logo", description = "Download the logo image of the merchant store")
     public ResponseEntity<?> downloadStoreLogo(@PathVariable Long storeId) {
         Resource resource = merchantStoreService.downloadStoreLogo(storeId);
 
@@ -130,6 +158,7 @@ public class MerchantStoreController {
 
     // ================= DELETE STORE LOGO =================
     @DeleteMapping("/{storeId}/delete-logo")
+    @Operation(summary = "Delete store logo", description = "Delete the logo image of the merchant store")
     public GenericResponse deleteStoreLogo(@PathVariable Long storeId) {
         String deletedLogoName = merchantStoreService.deleteStoreLogo(storeId);
 
@@ -141,17 +170,21 @@ public class MerchantStoreController {
     }
 
 // ========== optional get merchantStore storeName AND storeCode and storeCreationDate
-    @GetMapping
-    public GenericResponse<List<ReadAbleMerchantStore>> getStores(
-            @RequestParam(required = false) String storeCode,
-            @RequestParam(required = false) String storeName,
-            @RequestParam(required = false) LocalDate storeCreationDate) {
+@GetMapping
+@Operation(summary = "Get stores with optional filters",
+        description = "Fetch paginated list of merchant stores filtered by store code, store name, or creation date")
+public GenericResponse<PageResponse<ReadAbleMerchantStore>> getStores(
+        @RequestParam(required = false) String storeCode,
+        @RequestParam(required = false) String storeName,
+        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate storeCreationDate,
+        @RequestParam(defaultValue = "1") int page,
+        @RequestParam(defaultValue = "10") int size
+) {
+    PageResponse<ReadAbleMerchantStore> response = merchantStoreService
+            .getStores(storeCode, storeName, storeCreationDate, page, size);
 
-        List<ReadAbleMerchantStore> stores =
-                merchantStoreService.getStores(storeCode, storeName, storeCreationDate);
-
-        return GenericResponse.success(stores, "Stores fetched successfully");
-    }
+    return GenericResponse.success(response, "Stores fetched successfully");
+}
 
 
 }

@@ -13,11 +13,16 @@ import com.example.ecommerceproject.Repository.ProductRepo;
 import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.Service.ProductService;
 import com.example.ecommerceproject.converter.StoreConverter;
+import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleProduct;
 import com.example.ecommerceproject.specification.impl.ProductSpecification;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -76,15 +81,35 @@ public class ProductServiceImpl implements ProductService {
         return storeConverter.convertToReadable(saved); // Now categoryId & merchantStoreId won't be null
     }
 
-    @Override
-    public List<ReadAbleProduct> getAllProducts() {
-        List<Product> products = productRepo.findAll();
-        if (products.isEmpty()) throw new ProductNOtFoundException("No products found");
+//    @Override
+//    public PageResponse<ReadAbleProduct> getAllProducts(int page, int size) {
+//
+//        Pageable pageable = PageRequest.of(page - 1, size);
+//        Page<Product> products = productRepo.findAll(pageable);
+//
+//        List<ReadAbleProduct> dtoList = new ArrayList<>();
+//
+//        for (Product p : products.getContent()) {
+//            ReadAbleProduct dto = new ReadAbleProduct();
+//            dto.setId(p.getId());
+//            dto.setProductName(p.getProductName());
+//            dto.setSku(p.getSku());
+//            dto.setRefSku(p.getRefSku());
+//            dto.setAvailable(p.isAvailable());
+//            dto.setProductImage(p.getProductImage());
+//            dtoList.add(dto);
+//        }
+//
+//        PageResponse<ReadAbleProduct> response = new PageResponse<>();
+//        response.setContent(dtoList);
+//        response.setPage(page);
+//        response.setSize(size);
+//        response.setTotalPages(products.getTotalPages());
+//        response.setTotalElements(products.getTotalElements());
+//
+//        return response;
+//    }
 
-        return products.stream()
-                .map(storeConverter::convertToReadable) // now includes descriptions
-                .collect(Collectors.toList());
-    }
 
     @Override
     public ReadAbleProduct getProductById(Long id) {
@@ -243,55 +268,51 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
-    public List<ReadAbleProduct> getProducts(String storeCode,
-                                             String storeName,
-                                             Long productId,
-                                             String productName,
-                                             String categoryName,
-                                             Long categoryId) {
+    public PageResponse<ReadAbleProduct> getProducts(
+            String storeCode,
+            String storeName,
+            Long productId,
+            String productName,
+            String categoryName,
+            Long categoryId,
+            int pageNumber,
+            int pageSize
+    ) {
+        // Create pageable with sorting
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize, Sort.by("id").descending());
 
-        // Use specification to filter products
-        List<Product> products = productRepo.findAll(
-                productSpecfication.searchProduct(storeCode, storeName, productId, productName, categoryName, categoryId)
+        // Use specification to filter + pageable for pagination
+        Page<Product> productPage = productRepo.findAll(
+                productSpecfication.searchProduct(
+                        storeCode,
+                        storeName,
+                        productId,
+                        productName,
+                        categoryName,
+                        categoryId
+                ),
+                pageable
         );
 
-        // Map entity to ReadAble DTO
-        return products.stream()
-                .map(this::mapToReadAbleProduct)
+        // Convert entities to DTO
+        List<ReadAbleProduct> dtoList = productPage.getContent()
+                .stream()
+                .map(storeConverter::convertToReadable)
                 .collect(Collectors.toList());
+
+        // Build PageResponse
+        PageResponse<ReadAbleProduct> response = new PageResponse<>();
+        response.setContent(dtoList);
+        response.setPage(productPage.getNumber() + 1); // current page
+        response.setSize(productPage.getSize());
+        response.setTotalPages(productPage.getTotalPages());
+        response.setTotalElements(productPage.getTotalElements());
+
+        return response;
     }
 
-    private ReadAbleProduct mapToReadAbleProduct(Product product) {
-        ReadAbleProduct dto = new ReadAbleProduct();
 
-        dto.setId(product.getId());
-        dto.setProductName(product.getProductDescriptions() != null && !product.getProductDescriptions().isEmpty() ?
-                product.getProductDescriptions().get(0).getName() : product.getSku()); // Fallback to SKU if name not available
-        dto.setSku(product.getSku());
-        dto.setRefSku(product.getRefSku());
-        dto.setAvailable(product.isAvailable());
-        dto.setActive(product.isActive());
-        dto.setPrice(product.getPrice());
-        dto.setQuantity(product.getQuantity());
-        dto.setDateAvailable(product.getDateAvailable());
-        dto.setCreatedAt(product.getCreatedAt());
-        dto.setUpdatedAt(product.getUpdatedAt());
 
-        if (product.getCategory() != null) {
-            dto.setCategoryId(product.getCategory().getId());
-            dto.setCategoryName(product.getCategory().getCategoryName());
-        }
-
-        if (product.getMerchantStore() != null) {
-            dto.setMerchantStoreId(product.getMerchantStore().getId());
-            dto.setStoreCode(product.getMerchantStore().getStoreCode());
-            dto.setStoreName(product.getMerchantStore().getStoreName());
-        }
-
-        dto.setProductImage(product.getProductImage());
-
-        return dto;
-    }
 }
 
 
