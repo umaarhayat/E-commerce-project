@@ -6,6 +6,7 @@ import com.example.ecommerceproject.Repository.CustomerRepo;
 import com.example.ecommerceproject.Service.CustomerService;
 import com.example.ecommerceproject.Service.FileStorageService;
 import com.example.ecommerceproject.converter.StoreConverter;
+import com.example.ecommerceproject.dto.CustomerDto;
 import com.example.ecommerceproject.dto.PageResponse;
 import com.example.ecommerceproject.dto.ReadAbleCustomer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +55,7 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public PageResponse<ReadAbleCustomer> getAllCustomers(int page, int size) {
+
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Customer> customers = customerRepo.findAll(pageable);
 

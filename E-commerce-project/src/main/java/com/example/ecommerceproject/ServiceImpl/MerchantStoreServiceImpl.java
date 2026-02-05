@@ -1,8 +1,5 @@
 package com.example.ecommerceproject.ServiceImpl;
-import com.example.ecommerceproject.Entity.MerchantStore;
-import com.example.ecommerceproject.Entity.Role;
-import com.example.ecommerceproject.Entity.StoreAddress;
-import com.example.ecommerceproject.Entity.User;
+import com.example.ecommerceproject.Entity.*;
 import com.example.ecommerceproject.Exception.MerchantStoreNotFoundException;
 import com.example.ecommerceproject.Exception.RoleNotFoundException;
 import com.example.ecommerceproject.Exception.UserNotFoundException;
@@ -531,16 +528,29 @@ public String uploadStoreLogo(Long storeId, MultipartFile logo) {
 
                 // ---- ROLES (MAIN FIX) ----
                 List<RoleDto> roleDtos = new ArrayList<>();
+
                 if (u.getRoles() != null && !u.getRoles().isEmpty()) {
+
                     for (Role role : u.getRoles()) {
+
                         RoleDto r = new RoleDto();
                         r.setId(role.getId());
                         r.setRoleName(role.getRoleName());
+
+                        // ---- PERMISSIONS ----
+                        Set<Long> permissionIds = new HashSet<>();
+                        if (role.getPermissions() != null && !role.getPermissions().isEmpty()) {
+                            for (Permission p : role.getPermissions()) {
+                                permissionIds.add(p.getId());
+                            }
+                        }
+
+                        r.setPermissionIds(permissionIds);
                         roleDtos.add(r);
                     }
                 }
-                readUser.setRoles(roleDtos);
 
+                readUser.setRoles(roleDtos);
                 dto.setReadAbleUser(readUser);
             }
 
